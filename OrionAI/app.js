@@ -65,6 +65,24 @@ const VEHICLE_DATA = [
   { id: 'truck',   emoji: '🚛', name: 'Truck',    ratePerKm: 18,   maxWeight: 10000,baseSpeed: 45, overweightFactor: 1.0 },
 ];
 
+const DELIVERY_HISTORY = [
+  { shipmentId: 'SHP-7821', route: 'Bengaluru → Mysuru', status: 'delivered', deliveredAt: 'Today, 03:10 PM', delayMin: 8 },
+  { shipmentId: 'SHP-6204', route: 'Hubli → Bengaluru', status: 'transit', deliveredAt: 'ETA Today, 07:20 PM', delayMin: 18 },
+  { shipmentId: 'SHP-5091', route: 'Mangaluru → Shivamogga', status: 'delayed', deliveredAt: 'ETA Today, 09:05 PM', delayMin: 70 },
+  { shipmentId: 'SHP-4300', route: 'Belagavi → Davangere', status: 'transit', deliveredAt: 'ETA Today, 06:40 PM', delayMin: 14 },
+  { shipmentId: 'SHP-3814', route: 'Tumkur → Hubli', status: 'delivered', deliveredAt: 'Today, 11:45 AM', delayMin: 0 },
+  { shipmentId: 'SHP-7008', route: 'Bengaluru → Mangaluru', status: 'delivered', deliveredAt: 'Yesterday, 07:05 PM', delayMin: 22 },
+];
+
+const TRANSACTION_HISTORY = [
+  { txnId: 'TXN-11920', shipmentId: 'SHP-7821', amount: 4820, method: 'UPI', time: 'Today, 03:18 PM' },
+  { txnId: 'TXN-11913', shipmentId: 'SHP-3814', amount: 3620, method: 'Card', time: 'Today, 12:02 PM' },
+  { txnId: 'TXN-11905', shipmentId: 'SHP-7008', amount: 9210, method: 'NEFT', time: 'Yesterday, 07:20 PM' },
+  { txnId: 'TXN-11897', shipmentId: 'SHP-6120', amount: 2750, method: 'UPI', time: 'Yesterday, 03:11 PM' },
+  { txnId: 'TXN-11884', shipmentId: 'SHP-5987', amount: 6400, method: 'Card', time: 'Yesterday, 11:49 AM' },
+  { txnId: 'TXN-11875', shipmentId: 'SHP-5901', amount: 7180, method: 'Wallet', time: '2 days ago, 08:32 PM' },
+];
+
 // ── STATE ─────────────────────────────────────────────────
 let miniMap = null, trackMap = null;
 let movingMarker = null, movingMarkerPos = 0;
@@ -87,6 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupNav();
   setupThemeToggle();
   setupSidebarToggle();
+  initAssistant();
+  renderHistory();
+  renderAssistantInsight();
 });
 
 // ── CLOCK ─────────────────────────────────────────────────
@@ -129,7 +150,15 @@ function setupNav() {
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
 
-      const titles = { dashboard: 'Dashboard', tracking: 'Live Tracking', route: 'Route Optimizer', cost: 'Cost Analysis', alerts: 'Alerts' };
+      const titles = {
+        dashboard: 'Dashboard',
+        tracking: 'Live Tracking',
+        route: 'Route Optimizer',
+        cost: 'Cost Analysis',
+        alerts: 'Alerts',
+        assistant: 'AI Assistant',
+        history: 'History'
+      };
       document.getElementById('pageTitle').textContent = titles[sec] || sec;
 
       // Close sidebar on mobile
@@ -514,6 +543,206 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── AI ASSISTANT ────────────────────────────────────────────
+function initAssistant() {
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('chatInput');
+  const promptWrap = document.getElementById('quickPrompts');
+
+  if (!form || !input) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    submitAssistantPrompt(text);
+    input.value = '';
+  });
+
+  if (promptWrap) {
+    promptWrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('.prompt-chip');
+      if (!btn) return;
+      submitAssistantPrompt(btn.dataset.prompt || btn.textContent.trim());
+    });
+  }
+
+  addChatMessage('bot', 'Hi, I am OrionAI Assistant. Ask me about best routes for multiple deliveries, delay hotspots, cost reduction, or recent delivery/transaction history.');
+}
+
+function submitAssistantPrompt(question) {
+  addChatMessage('user', question);
+  addChatMessage('bot', 'Analyzing live logistics signals...');
+  setTimeout(() => {
+    replaceLastBotMessage(generateAssistantResponse(question));
+  }, 500);
+}
+
+function addChatMessage(role, text) {
+  const feed = document.getElementById('chatFeed');
+  if (!feed) return;
+  const wrap = document.createElement('div');
+  wrap.className = `chat-msg ${role}`;
+  const ts = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  wrap.innerHTML = `${escapeHtml(text)}<div class="chat-msg-meta">${role === 'user' ? 'You' : 'OrionAI'} • ${ts}</div>`;
+  feed.appendChild(wrap);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function replaceLastBotMessage(text) {
+  const feed = document.getElementById('chatFeed');
+  if (!feed) return;
+  const bots = feed.querySelectorAll('.chat-msg.bot');
+  if (bots.length === 0) return;
+  const target = bots[bots.length - 1];
+  const ts = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  target.innerHTML = `${escapeHtml(text)}<div class="chat-msg-meta">OrionAI • ${ts}</div>`;
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function generateAssistantResponse(rawQuestion) {
+  const q = rawQuestion.toLowerCase();
+  if (q.includes('multi') || q.includes('multiple') || q.includes('best route') || q.includes('deliveries')) {
+    return buildMultiRouteResponse();
+  }
+  if (q.includes('delay') || q.includes('area') || q.includes('hotspot')) {
+    return buildDelayHotspotResponse();
+  }
+  if (q.includes('cost') || q.includes('reduce') || q.includes('saving')) {
+    return buildCostReductionResponse();
+  }
+  if (q.includes('history') || q.includes('recent') || q.includes('transaction')) {
+    return buildHistoryResponse();
+  }
+  return `I can help with:
+1) Best routes for multiple deliveries
+2) Areas with highest delays
+3) Cost reduction strategy
+4) Recent delivery and transaction history
+Try asking one of these directly.`;
+}
+
+function buildMultiRouteResponse() {
+  const topRoutes = Object.entries(ROUTE_DATA)
+    .sort((a, b) => a[1].dist - b[1].dist)
+    .slice(0, 3)
+    .map(([route, details], idx) => `${idx + 1}. ${route.replace('|', ' → ')} (${details.dist} km, ${details.congestion} traffic)`);
+
+  return `Best multi-delivery sequence for today:
+${topRoutes.join('\n')}
+
+Recommendation: Group northbound stops (Hubli/Belagavi/Davangere) in one run and coastal routes separately to avoid NH-75 peak congestion.`;
+}
+
+function buildDelayHotspotResponse() {
+  const delayed = SHIPMENTS.filter(s => s.status === 'delayed').length;
+  const highCongestionRoutes = Object.entries(ROUTE_DATA)
+    .filter(([, details]) => details.congestion === 'high')
+    .map(([route]) => route.replace('|', ' → '));
+
+  return `Current delay hotspots:
+• Coastal + ghat corridor: Mangaluru → Shivamogga (high delay risk)
+• Urban edge congestion: Bengaluru → Tumkur (peak-hour pressure)
+• Active delayed shipments right now: ${delayed}
+
+Action: Dispatch buffers of +45 minutes on high-risk lanes and auto-reroute where toll roads are clear.`;
+}
+
+function buildCostReductionResponse() {
+  const sampleDist = 180;
+  const truckCost = Math.round(sampleDist * VEHICLE_DATA.find(v => v.id === 'truck').ratePerKm);
+  const vanCost = Math.round(sampleDist * VEHICLE_DATA.find(v => v.id === 'minivan').ratePerKm);
+  const savings = truckCost - vanCost;
+
+  return `Cost reduction plan:
+• Shift medium loads from truck to mini-van on sub-200km routes
+• Bundle same-corridor orders into one dispatch window
+• Prefer standard/express over same-day for non-critical consignments
+
+Estimated saving: ~₹${savings.toLocaleString('en-IN')} per 180km route when using mini-van instead of truck.`;
+}
+
+function buildHistoryResponse() {
+  const completed = DELIVERY_HISTORY.filter(d => d.status === 'delivered').length;
+  const delayed = DELIVERY_HISTORY.filter(d => d.status === 'delayed').length;
+  const revenue = TRANSACTION_HISTORY.reduce((sum, t) => sum + t.amount, 0);
+
+  return `Recent history snapshot:
+• Deliveries tracked: ${DELIVERY_HISTORY.length}
+• Completed: ${completed}, Delayed: ${delayed}
+• Recent transaction value: ₹${revenue.toLocaleString('en-IN')}
+
+Open the History section for full shipment-wise and transaction-wise logs.`;
+}
+
+function renderAssistantInsight() {
+  const delayedPct = Math.round((SHIPMENTS.filter(s => s.status === 'delayed').length / SHIPMENTS.length) * 100);
+  const best = Object.entries(ROUTE_DATA).filter(([, d]) => d.congestion === 'low').slice(0, 2).map(([r]) => r.replace('|', ' → ')).join(', ');
+  const box = document.getElementById('assistantInsight');
+  if (!box) return;
+  box.innerHTML = `Current delayed shipment ratio is <strong>${delayedPct}%</strong>. Best low-congestion lanes now: <strong>${best}</strong>. OrionAI recommends clustering deliveries by corridor to reduce idle fleet time.`;
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ── HISTORY ─────────────────────────────────────────────────
+function renderHistory() {
+  renderHistorySummary();
+  renderDeliveryHistory();
+  renderTransactionHistory();
+}
+
+function renderHistorySummary() {
+  const delivered = DELIVERY_HISTORY.filter(x => x.status === 'delivered').length;
+  const delayed = DELIVERY_HISTORY.filter(x => x.status === 'delayed').length;
+  const inTransit = DELIVERY_HISTORY.filter(x => x.status === 'transit').length;
+  const totalAmount = TRANSACTION_HISTORY.reduce((sum, t) => sum + t.amount, 0);
+
+  const summary = document.getElementById('historySummary');
+  if (!summary) return;
+  summary.innerHTML = `
+    <div class="summary-pill"><div class="label">Total Shipments</div><div class="value">${DELIVERY_HISTORY.length}</div></div>
+    <div class="summary-pill"><div class="label">Delivered</div><div class="value" style="color:var(--green)">${delivered}</div></div>
+    <div class="summary-pill"><div class="label">In Transit / Delayed</div><div class="value">${inTransit} / <span style="color:var(--red)">${delayed}</span></div></div>
+    <div class="summary-pill"><div class="label">Recent Transaction Value</div><div class="value">₹${totalAmount.toLocaleString('en-IN')}</div></div>
+  `;
+}
+
+function renderDeliveryHistory() {
+  const body = document.getElementById('deliveryHistoryBody');
+  if (!body) return;
+  body.innerHTML = DELIVERY_HISTORY.map(item => `
+    <tr>
+      <td>${item.shipmentId}</td>
+      <td>${item.route}</td>
+      <td><span class="table-badge ${item.status}">${item.status.toUpperCase()}</span></td>
+      <td>${item.deliveredAt}</td>
+      <td>${item.delayMin > 0 ? `${item.delayMin} min` : '-'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderTransactionHistory() {
+  const body = document.getElementById('transactionHistoryBody');
+  if (!body) return;
+  body.innerHTML = TRANSACTION_HISTORY.map(item => `
+    <tr>
+      <td>${item.txnId}</td>
+      <td>${item.shipmentId}</td>
+      <td>₹${item.amount.toLocaleString('en-IN')}</td>
+      <td>${item.method}</td>
+      <td>${item.time}</td>
+    </tr>
+  `).join('');
 }
 
 // ── SIMULATE LIVE UPDATES ─────────────────────────────────
