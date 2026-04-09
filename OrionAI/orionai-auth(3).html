@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OrionAI — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg-base:       #0d0f14;
+    --bg-panel:      #13161d;
+    --bg-card:       #1a1d27;
+    --bg-input:      #1e2230;
+    --border:        #252a38;
+    --border-focus:  #4f5fff;
+    --accent-blue:   #4f5fff;
+    --accent-purple: #7b5ea7;
+    --accent-green:  #22c55e;
+    --accent-orange: #f97316;
+    --text-primary:  #f0f2ff;
+    --text-muted:    #6b7280;
+    --text-dim:      #9ca3af;
+    --shadow-glow:   0 0 40px rgba(79,95,255,0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    width: 42%;
+    min-height: 100vh;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* decorative blobs */
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: -80px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(79,95,255,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .left-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; right: -60px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(123,94,167,0.16) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+  }
+
+  .brand-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(79,95,255,0.35);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .hero-content {
+    z-index: 1;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(79,95,255,0.12);
+    border: 1px solid rgba(79,95,255,0.3);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #818cf8;
+    letter-spacing: 0.08em;
+    margin-bottom: 28px;
+  }
+
+  .hero-tag .dot {
+    width: 7px; height: 7px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 44px;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, #4f5fff 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 320px;
+    margin-bottom: 40px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 32px;
+  }
+
+  .stat-item {}
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .right-panel::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(79,95,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* grid texture */
+  .right-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: var(--shadow-glow), 0 32px 64px rgba(0,0,0,0.4);
+    z-index: 1;
+    animation: cardIn 0.5s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 32px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, #4f5fff 0%, #7b5ea7 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(79,95,255,0.35);
+  }
+
+  .form-section { display: none; }
+  .form-section.visible { display: block; }
+
+  .form-header { margin-bottom: 28px; }
+  .form-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .form-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .form-group { margin-bottom: 18px; }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 15px;
+    pointer-events: none;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px 13px 40px;
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(79,95,255,0.15);
+  }
+
+  input::placeholder { color: var(--text-muted); }
+
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .forgot-link {
+    font-size: 12px;
+    color: #818cf8;
+    text-decoration: none;
+    float: right;
+    margin-top: -4px;
+  }
+
+  .forgot-link:hover { text-decoration: underline; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4f5fff 0%, #7b5ea7 100%);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(79,95,255,0.3);
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(79,95,255,0.4);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .btn-sso {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-input);
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-sso:hover { border-color: #4f5fff; background: rgba(79,95,255,0.06); }
+
+  .sso-icon {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+  }
+
+  .terms {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+  .terms a { color: #818cf8; text-decoration: none; }
+  .terms a:hover { text-decoration: underline; }
+
+  /* password strength */
+  .strength-bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .strength-seg {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  .strength-seg.active { background: var(--accent-green); }
+  .strength-seg.warn   { background: var(--accent-orange); }
+
+  /* engine badge */
+  .engine-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    justify-content: center;
+    margin-top: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .engine-dot {
+    width: 7px; height: 7px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* responsive */
+  @media (max-width: 800px) {
+    .left-panel { display: none; }
+    .right-panel { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="hero-content">
+    <div class="brand" style="margin-bottom: 48px;">
+      <div class="brand-icon">
+        <img src="data:image/jpeg;base64,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" alt="OrionAI Logo" style="width:42px;height:42px;border-radius:10px;display:block;" />
+      </div>
+      <span class="brand-name">OrionAI</span>
+    </div>
+
+    <div class="hero-tag">
+      <span class="dot"></span>
+      AI ENGINE ONLINE
+    </div>
+    <h1 class="hero-title">India Delivery<br><span>Network</span><br>Operations</h1>
+    <p class="hero-desc">Real-time fleet intelligence and AI-powered route optimization for last-mile delivery across India.</p>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-val">2,841</div>
+        <div class="stat-label">TOTAL DELIVERIES</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">184</div>
+        <div class="stat-label">ACTIVE ROUTES</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">₹4.2L</div>
+        <div class="stat-label">COST SAVED MTD</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="auth-card">
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login', this)">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('signup', this)">Sign Up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="form-section visible" id="login">
+      <div class="form-header">
+        <div class="form-title">Welcome back</div>
+        <div class="form-subtitle">Access your operations dashboard</div>
+      </div>
+
+      <div class="form-group">
+        <label>Email address</label>
+        <div class="input-wrap">
+          <span class="input-icon">✉</span>
+          <input type="email" placeholder="you@company.com" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Password
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="handleSignIn()">Sign In to Dashboard</button>
+
+      <div class="divider">OR CONTINUE WITH</div>
+
+      <button class="btn-sso">
+        <svg class="sso-icon" viewBox="0 0 18 18" fill="none">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="terms">
+        By signing in you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+
+    <!-- SIGN UP -->
+    <div class="form-section" id="signup">
+      <div class="form-header">
+        <div class="form-title">Create account</div>
+        <div class="form-subtitle">Start optimizing your delivery network</div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label>First name</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" placeholder="Rohan" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Last name</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" placeholder="Mehta" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Work email</label>
+        <div class="input-wrap">
+          <span class="input-icon">✉</span>
+          <input type="email" placeholder="you@company.com" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Organisation</label>
+        <div class="input-wrap">
+          <span class="input-icon">🏢</span>
+          <input type="text" placeholder="Acme Logistics Pvt. Ltd." />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" placeholder="Create a strong password" id="pwd-input" oninput="updateStrength(this.value)" />
+        </div>
+        <div class="strength-bar">
+          <div class="strength-seg" id="s1"></div>
+          <div class="strength-seg" id="s2"></div>
+          <div class="strength-seg" id="s3"></div>
+          <div class="strength-seg" id="s4"></div>
+        </div>
+      </div>
+
+      <button class="btn-primary">Create Account</button>
+
+      <div class="terms">
+        Already have an account? <a href="#" onclick="switchTabByName('login')">Sign in here</a>.<br/>
+        By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+
+    <div class="engine-badge">
+      <span class="engine-dot"></span>
+      AI Engine Online · Secured by OrionAI
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('visible'));
+    btn.classList.add('active');
+    document.getElementById(name).classList.add('visible');
+  }
+
+  function switchTabByName(name) {
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('visible'));
+    const idx = name === 'login' ? 0 : 1;
+    btns[idx].classList.add('active');
+    document.getElementById(name).classList.add('visible');
+    return false;
+  }
+
+  function updateStrength(val) {
+    const segs = [document.getElementById('s1'), document.getElementById('s2'),
+                  document.getElementById('s3'), document.getElementById('s4')];
+    segs.forEach(s => { s.classList.remove('active', 'warn'); });
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    for (let i = 0; i < score; i++) {
+      segs[i].classList.add(score < 3 ? 'warn' : 'active');
+    }
+  }
+
+  function handleSignIn() {
+    const btn = document.querySelector('#login .btn-primary');
+    btn.textContent = 'Authenticating…';
+    btn.style.opacity = '0.75';
+    setTimeout(() => {
+      btn.textContent = '✓ Redirecting to Dashboard';
+      btn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+    }, 1200);
+  }
+</script>
+</body>
+</html>
