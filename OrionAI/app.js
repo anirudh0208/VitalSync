@@ -66,6 +66,71 @@ const VEHICLE_DATA = [
   { id: 'flight',  emoji: '✈️', name: 'Flight',   ratePerKm: 32,   maxWeight: 25000,baseSpeed: 650, overweightFactor: 1.2 },
 ];
 
+// Cost analysis is based on user-provided sample courier tables (₹):
+// 1kg intra/inter + 10kg intra/inter + comparative weight slabs.
+const COURIER_COST_DATA = [
+  {
+    id: 'dtdc',
+    emoji: '📦',
+    name: 'DTDC',
+    intra1: [40, 70], inter1: [80, 100],
+    intra10: [200, 300], inter10: [600, 900],
+    slabs: [
+      { min: 0, max: 1, range: [40, 70] },
+      { min: 1, max: 2, range: [70, 100] },
+      { min: 2, max: 3, range: [100, 150] },
+      { min: 4, max: 5, range: [150, 200] },
+      { min: 5, max: 10, range: [200, 400] },
+      { min: 10, max: null, range: [400, 520] },
+    ],
+  },
+  {
+    id: 'delhivery',
+    emoji: '🚚',
+    name: 'Delhivery',
+    intra1: [30, 50], inter1: [70, 120],
+    intra10: [180, 250], inter10: [500, 800],
+    slabs: [
+      { min: 0, max: 1, range: [30, 50] },
+      { min: 1, max: 2, range: [50, 80] },
+      { min: 2, max: 3, range: [80, 120] },
+      { min: 4, max: 5, range: [120, 180] },
+      { min: 5, max: 10, range: [180, 300] },
+      { min: 10, max: null, range: [300, 420] },
+    ],
+  },
+  {
+    id: 'blue-dart',
+    emoji: '🛫',
+    name: 'Blue Dart',
+    intra1: [100, 150], inter1: [120, 200],
+    intra10: [400, 600], inter10: [800, 1200],
+    slabs: [
+      { min: 0, max: 1, range: [100, 150] },
+      { min: 1, max: 2, range: [150, 200] },
+      { min: 2, max: 3, range: [200, 300] },
+      { min: 4, max: 5, range: [300, 400] },
+      { min: 5, max: 10, range: [400, 600] },
+      { min: 10, max: null, range: [600, 800] },
+    ],
+  },
+  {
+    id: 'india-post',
+    emoji: '📮',
+    name: 'India Post',
+    intra1: [35, 55], inter1: [65, 90],
+    intra10: [150, 200], inter10: [400, 600],
+    slabs: [
+      { min: 0, max: 1, range: [35, 55] },
+      { min: 1, max: 2, range: [50, 80] },
+      { min: 2, max: 3, range: [80, 120] },
+      { min: 4, max: 5, range: [120, 180] },
+      { min: 5, max: 10, range: [200, 300] },
+      { min: 10, max: null, range: [300, 420] },
+    ],
+  },
+];
+
 const INDIA_STATE_DISTRICTS_URLS = [
   'https://raw.githubusercontent.com/nshntarora/Indian-Cities-JSON/master/states-and-districts.json',
   'https://raw.githubusercontent.com/iamrahulchauhan/indian-state-district-city/master/state_district_wise.json',
@@ -663,57 +728,71 @@ function updateCost() {
   const weight  = parseFloat(document.getElementById('costWeight').value) || 10;
   const urgency = parseFloat(document.getElementById('costUrgency').value)|| 1;
   const fuel    = parseFloat(document.getElementById('costFuel').value)   || 1;
+  const interState = dist > 80;
 
-  const costs = VEHICLE_DATA.map(v => {
-    let effectiveRate = v.ratePerKm;
-    if (weight > v.maxWeight) effectiveRate *= v.overweightFactor;
-    const raw = Math.round(dist * effectiveRate * urgency * fuel);
-    const etaH = Math.round(dist / v.baseSpeed);
-    const weightOK = weight <= v.maxWeight;
-    return { ...v, cost: raw, etaH, weightOK };
+  const costs = COURIER_COST_DATA.map((provider) => {
+    const slab = provider.slabs.find(s => weight > s.min && (s.max == null || weight <= s.max)) || provider.slabs[provider.slabs.length - 1];
+    const baseRange = interState ? provider.inter10 : provider.intra10;
+    const slabMid = Math.round((slab.range[0] + slab.range[1]) / 2);
+    const tenKgMid = Math.round((baseRange[0] + baseRange[1]) / 2);
+    const weightMultiplier = weight <= 10 ? slabMid / 220 : slabMid / 300;
+    const distanceMultiplier = interState ? (0.95 + dist / 260) : (0.85 + dist / 320);
+
+    const raw = Math.round(tenKgMid * weightMultiplier * distanceMultiplier * urgency * fuel);
+    const etaH = interState ? Math.max(6, Math.round(dist / 55)) : Math.max(2, Math.round(dist / 28));
+
+    return {
+      ...provider,
+      cost: raw,
+      etaH,
+      baseRange,
+      slabRange: slab.range,
+      lane: interState ? 'Inter-State' : 'Intra-City',
+    };
   });
 
-  // Find cheapest among weight-compatible
-  const compatible = costs.filter(c => c.weightOK);
-  const minCost = compatible.length > 0 ? Math.min(...compatible.map(c => c.cost)) : Infinity;
+  const minCost = Math.min(...costs.map(c => c.cost));
 
   const container = document.getElementById('vehicleCards');
   container.innerHTML = costs.map((v, i) => {
-    const isCheapest = v.weightOK && v.cost === minCost;
-    const isOverweight = !v.weightOK;
+    const isCheapest = v.cost === minCost;
     return `
-      <div class="vehicle-card ${isCheapest ? 'cheapest' : ''}" style="animation-delay:${i*0.08}s;${isOverweight ? 'opacity:0.45;filter:grayscale(0.6)' : ''}">
+      <div class="vehicle-card ${isCheapest ? 'cheapest' : ''}" style="animation-delay:${i*0.08}s;">
         ${isCheapest ? '<div class="cheapest-badge">✅ AI Recommended</div>' : ''}
         <div class="vehicle-emoji">${v.emoji}</div>
         <div class="vehicle-name">${v.name}</div>
         <div class="vehicle-cost ${isCheapest ? 'green' : ''}">₹${v.cost.toLocaleString('en-IN')}</div>
         <div class="vehicle-breakdown">
-          Base: ₹${Math.round(v.ratePerKm)}/km × ${dist}km<br>
+          Lane: ${v.lane}<br>
+          Image slab (${weight}kg): ₹${v.slabRange[0]}–₹${v.slabRange[1]}<br>
+          10kg ${v.lane}: ₹${v.baseRange[0]}–₹${v.baseRange[1]}<br>
           ${urgency > 1 ? `Urgency: ×${urgency}<br>` : ''}
-          Max load: ${v.maxWeight >= 1000 ? (v.maxWeight/1000)+'T' : v.maxWeight+'kg'}
-          ${isOverweight ? '<br><span style="color:var(--red)">⚠ Overweight for this vehicle</span>' : ''}
+          Fuel factor: ×${fuel}
         </div>
-        <div class="vehicle-eta">🕐 ETA: ~${v.etaH}h ${Math.round((dist / v.baseSpeed - v.etaH) * 60)}m</div>
+        <div class="vehicle-eta">🕐 ETA: ~${v.etaH}h</div>
       </div>
     `;
   }).join('');
 
   // AI recommendation text
-  const cheapest = costs.find(v => v.weightOK && v.cost === minCost);
+  const cheapest = costs.find(v => v.cost === minCost);
   const rec = document.getElementById('aiRecCard');
   if (cheapest && rec) {
+    const highCost = Math.max(...costs.map(c => c.cost));
+    const savings = highCost - cheapest.cost;
     rec.innerHTML = `
       <div class="ai-rec-header">
         <div class="ai-badge">🤖 AI Insight</div>
-        <span style="font-family:Syne;font-size:14px;font-weight:700">Cost Intelligence</span>
+        <span style="font-family:Syne;font-size:14px;font-weight:700">Courier Cost Intelligence</span>
       </div>
       <div class="ai-rec-text">
-        For a <strong>${weight}kg</strong> shipment over <strong>${dist}km</strong>,
-        the <strong>${cheapest.emoji} ${cheapest.name}</strong> is the most cost-effective option at
+        Based on your shared courier tables for 1kg / 10kg and weight-category rates,
+        for <strong>${weight}kg</strong> over <strong>${dist}km</strong> (${interState ? 'Inter-State' : 'Intra-City'}),
+        <strong>${cheapest.emoji} ${cheapest.name}</strong> is estimated best at
         <strong style="color:var(--green)">₹${cheapest.cost.toLocaleString('en-IN')}</strong>.
-        ${weight > 20 && cheapest.id !== 'bike' ? `<br><br>📦 Package weight exceeds bike capacity — Mini Van or Truck required.` : ''}
-        ${urgency > 1.4 ? `<br><br>⚡ Same-day surcharge applied (×${urgency}). Consider express (×1.5) to reduce cost by ~${Math.round((urgency-1.5)*100)}%.` : ''}
-        <br><br>💡 Tip: Consolidating shipments on this route could save up to <strong>₹${Math.round(cheapest.cost * 0.18).toLocaleString('en-IN')}</strong> per trip.
+        <br><br>Potential savings vs highest provider: <strong>₹${savings.toLocaleString('en-IN')}</strong>.
+        ${urgency > 1.4 ? `<br><br>⚡ Same-day surcharge is significant. Express may reduce spend.` : ''}
+        <br><br>Compared providers: DTDC, Delhivery, Blue Dart, India Post.
       </div>
     `;
   }
