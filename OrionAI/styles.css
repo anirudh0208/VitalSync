@@ -913,8 +913,17 @@ body {
   gap: 8px;
 }
 
-.chat-input { flex: 1; }
-.chat-send-btn { min-width: 92px; justify-content: center; }
+.chat-input {
+  flex: 1 1 auto;
+  min-height: 44px;
+}
+
+.chat-send-btn {
+  min-width: 68px;
+  padding: 8px 12px;
+  justify-content: center;
+  font-size: 12px;
+}
 
 .assistant-side {
   display: flex;
@@ -1175,6 +1184,24 @@ body.light .leaflet-tile-pane { filter: none; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
+.map-center-btn {
+  margin: 10px;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+  cursor: pointer;
+  background: #ffffff;
+  color: #1f2937;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 36px;
+  padding: 0 14px;
+}
+
+.map-center-btn:hover { background: #f3f4f6; }
+.map-center-btn:focus { outline: 2px solid #3b82f6; outline-offset: 2px; }
+
 /* ── ROUTE RIGHT ────────────────────────────────── */
 .route-right { display: flex; flex-direction: column; gap: 14px; }
 
@@ -1201,8 +1228,8 @@ body.light .leaflet-tile-pane { filter: none; }
   .vehicle-cards { grid-template-columns: 1fr; }
   .section { padding: 20px 16px; }
   .history-summary { grid-template-columns: 1fr; }
-  .chat-input-row { flex-direction: column; }
-  .chat-send-btn { width: 100%; }
+  .chat-input-row { align-items: stretch; }
+  .chat-send-btn { width: auto; align-self: flex-end; }
 }
 
 /* ── LIGHT MODE ─────────────────────────────────── */
@@ -1230,3 +1257,8 @@ body.light .prompt-chip { background: #eff6ff; }
 
 body.light .leaflet-container { background: #e8eaf4 !important; }
 body.light .leaflet-tile-pane { filter: none; }
+
+body.light .map-center-btn {
+  background: #ffffff;
+  color: #111827;
+}

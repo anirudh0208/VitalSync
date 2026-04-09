@@ -85,10 +85,27 @@ const TRANSACTION_HISTORY = [
 
 // ── STATE ─────────────────────────────────────────────────
 let miniMap = null, trackMap = null;
-let movingMarker = null, movingMarkerPos = 0;
+let movingMarker = null;
 let trackMovingMarker = null;
 let isLightMode = false;
-let currentShipmentIndex = 0;
+let googleMapsReady = false;
+let trackingMarkers = [];
+let trackingRouteLines = [];
+let trackingAnimationTimer = null;
+let miniMapPendingInit = false;
+const TRACK_CENTER = { lat: 14.0, lng: 76.0 };
+const DASH_CENTER = { lat: 14.5, lng: 75.7 };
+
+window.onGoogleMapsReady = function onGoogleMapsReady() {
+  googleMapsReady = true;
+  if (!miniMap || miniMapPendingInit) {
+    initMiniMap();
+  }
+  const trackingSection = document.getElementById('sec-tracking');
+  if (trackingSection && trackingSection.classList.contains('active') && !trackMap) {
+    initTrackMap();
+  }
+};
 
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -175,7 +192,16 @@ function switchSection(name) {
   if (target) target.classList.add('active');
 
   // Init maps lazily
-  if (name === 'tracking' && !trackMap) setTimeout(initTrackMap, 100);
+  if (name === 'dashboard' && googleMapsReady && !miniMap) {
+    setTimeout(initMiniMap, 100);
+  }
+  if (name === 'tracking' && !trackMap) {
+    if (googleMapsReady && window.google && window.google.maps) {
+      setTimeout(initTrackMap, 100);
+    } else {
+      showToast('🗺️ Waiting for Google Maps to load...');
+    }
+  }
 }
 
 // ── SIDEBAR TOGGLE ────────────────────────────────────────
@@ -261,53 +287,146 @@ function renderAlertStats() {
 
 // ── MINI MAP (DASHBOARD) ──────────────────────────────────
 function initMiniMap() {
-  miniMap = L.map('miniMap', { zoomControl: true, scrollWheelZoom: false })
-    .setView([14.5, 75.7], 7);
+  if (!googleMapsReady || !window.google || !window.google.maps) {
+    miniMapPendingInit = true;
+    return;
+  }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 18
-  }).addTo(miniMap);
+  miniMapPendingInit = false;
+  miniMap = new google.maps.Map(document.getElementById('miniMap'), {
+    center: DASH_CENTER,
+    zoom: 7,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    zoomControl: true
+  });
 
+  addMapCenterControl(miniMap, DASH_CENTER, 7);
+  addMapKmlLayer(miniMap);
   addShipmentMarkers(miniMap);
   startMovingMarker(miniMap, true);
 }
 
 // ── TRACK MAP (TRACKING SECTION) ─────────────────────────
 function initTrackMap() {
-  trackMap = L.map('trackMap', { zoomControl: true })
-    .setView([14.0, 76.0], 7);
+  if (!googleMapsReady || !window.google || !window.google.maps) {
+    showToast('⚠️ Google Maps not loaded. Add a valid API key in index.html');
+    return;
+  }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 18
-  }).addTo(trackMap);
+  trackMap = new google.maps.Map(document.getElementById('trackMap'), {
+    center: TRACK_CENTER,
+    zoom: 7,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true
+  });
 
-  // Add all city markers
+  addMapCenterControl(trackMap, TRACK_CENTER, 7);
+  addMapKmlLayer(trackMap);
+
+  trackingMarkers = [];
+  trackingRouteLines = [];
+
   Object.entries(CITIES).forEach(([name, latlng]) => {
-    const icon = L.divIcon({
-      className: '',
-      html: `<div class="custom-marker" style="background:rgba(59,130,246,0.9)">🏙️</div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
+    const marker = new google.maps.Marker({
+      position: { lat: latlng[0], lng: latlng[1] },
+      map: trackMap,
+      title: name,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 7,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.9,
+        strokeColor: '#ffffff',
+        strokeWeight: 2
+      }
     });
-    L.marker(latlng, { icon })
-      .addTo(trackMap)
-      .bindPopup(`<b style="font-family:Syne">${name}</b>`);
+
+    const info = new google.maps.InfoWindow({
+      content: `<b style="font-family:Syne">${name}</b>`
+    });
+    marker.addListener('click', () => info.open({ anchor: marker, map: trackMap }));
+    trackingMarkers.push(marker);
   });
 
   addShipmentMarkers(trackMap);
   startMovingMarker(trackMap, false);
 
-  // Draw a sample route line
   const from = CITIES['Bengaluru (Whitefield)'];
-  const to   = CITIES['Mysuru (City Centre)'];
-  L.polyline([from, to], { color: '#3b82f6', weight: 3, opacity: 0.7, dashArray: '8,6' }).addTo(trackMap);
-  L.polyline([CITIES['Hubli'], from], { color: '#8b5cf6', weight: 3, opacity: 0.6, dashArray: '8,6' }).addTo(trackMap);
-  L.polyline([CITIES['Mangaluru (Port)'], CITIES['Shivamogga']], { color: '#ef4444', weight: 3, opacity: 0.6, dashArray: '8,6' }).addTo(trackMap);
+  const to = CITIES['Mysuru (City Centre)'];
+  const routeLines = [
+    { pts: [from, to], color: '#3b82f6' },
+    { pts: [CITIES['Hubli'], from], color: '#8b5cf6' },
+    { pts: [CITIES['Mangaluru (Port)'], CITIES['Shivamogga']], color: '#ef4444' },
+  ];
+
+  routeLines.forEach((line) => {
+    const polyline = new google.maps.Polyline({
+      path: line.pts.map(([lat, lng]) => ({ lat, lng })),
+      geodesic: true,
+      strokeColor: line.color,
+      strokeOpacity: 0.75,
+      strokeWeight: 3,
+      map: trackMap
+    });
+    trackingRouteLines.push(polyline);
+  });
+}
+
+function addMapCenterControl(map, center, zoom) {
+  const controlButton = document.createElement('button');
+  controlButton.className = 'map-center-btn';
+  controlButton.type = 'button';
+  controlButton.textContent = 'Center Map';
+  controlButton.title = 'Click to recenter the map';
+  controlButton.addEventListener('click', () => {
+    map.setCenter(center);
+    map.setZoom(zoom);
+  });
+
+  const centerControlDiv = document.createElement('div');
+  centerControlDiv.appendChild(controlButton);
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+}
+
+function addMapKmlLayer(map) {
+  const kmlLayer = new google.maps.KmlLayer({
+    url: 'https://developers.google.com/maps/documentation/javascript/examples/kml/westcampus.kml',
+    preserveViewport: true,
+    suppressInfoWindows: false
+  });
+  kmlLayer.setMap(map);
 }
 
 function addShipmentMarkers(map) {
+  if (window.google && window.google.maps && map instanceof google.maps.Map) {
+    SHIPMENTS.forEach(s => {
+      const color = s.status === 'delayed' ? '#ef4444' : s.status === 'delivered' ? '#10b981' : '#f59e0b';
+      const marker = new google.maps.Marker({
+        position: { lat: s.lat, lng: s.lng },
+        map,
+        title: s.id,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: color,
+          fillOpacity: 0.95,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      });
+
+      const info = new google.maps.InfoWindow({
+        content: `<b style="font-family:Syne">${s.id}</b><br>${s.from.split(' ')[0]} → ${s.to.split(' ')[0]}<br>ETA: ${s.eta}`
+      });
+      marker.addListener('click', () => info.open({ anchor: marker, map }));
+      if (map === trackMap) trackingMarkers.push(marker);
+    });
+    return;
+  }
+
   SHIPMENTS.forEach(s => {
     const color = s.status === 'delayed' ? '#ef4444' : s.status === 'delivered' ? '#10b981' : '#f59e0b';
     const icon = L.divIcon({
@@ -327,6 +446,35 @@ function startMovingMarker(map, isMini) {
   const from = CITIES['Bengaluru (Whitefield)'];
   const to   = CITIES['Mysuru (City Centre)'];
   let t = 0;
+
+  if (window.google && window.google.maps && map instanceof google.maps.Map) {
+    const marker = new google.maps.Marker({
+      position: { lat: from[0], lng: from[1] },
+      map,
+      title: 'SHP-7821 · Live Tracking',
+      icon: {
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        scale: 6,
+        fillColor: '#3b82f6',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2
+      }
+    });
+
+    if (isMini) movingMarker = marker; else trackMovingMarker = marker;
+    if (!isMini && trackingAnimationTimer) clearInterval(trackingAnimationTimer);
+
+    const timer = setInterval(() => {
+      t = (t + 0.003) % 1;
+      const lat = from[0] + (to[0] - from[0]) * t;
+      const lng = from[1] + (to[1] - from[1]) * t;
+      marker.setPosition({ lat, lng });
+    }, 100);
+
+    if (!isMini) trackingAnimationTimer = timer;
+    return;
+  }
 
   const truckIcon = L.divIcon({
     className: '',
@@ -349,7 +497,12 @@ function startMovingMarker(map, isMini) {
 function focusShipment(id) {
   const s = SHIPMENTS.find(x => x.id === id);
   if (!s || !trackMap) return;
-  trackMap.setView([s.lat, s.lng], 9, { animate: true });
+  if (window.google && window.google.maps && trackMap instanceof google.maps.Map) {
+    trackMap.panTo({ lat: s.lat, lng: s.lng });
+    trackMap.setZoom(9);
+  } else {
+    trackMap.setView([s.lat, s.lng], 9, { animate: true });
+  }
   showToast(`📍 Focused on ${id}`);
 }
 
