@@ -1,263 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OrionAI – AI-Powered Logistics Optimization</title>
-  <meta name="description" content="OrionAI transforms logistics with AI-powered route optimization, real-time fleet tracking, demand forecasting, and intelligent supply chain analytics." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LogiKA — AI Logistics · Karnataka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- ═══════════════════════════════ NAV ═══════════════════════════════ -->
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
-      <div class="nav-logo">
-        <div class="logo-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 20L20 5L35 20L20 35L5 20Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
-            <circle cx="20" cy="20" r="5" fill="url(#logoGrad)"/>
-            <path d="M20 5V35M5 20H35" stroke="url(#logoGrad)" stroke-width="1" opacity="0.4"/>
-            <defs>
-              <linearGradient id="logoGrad" x1="5" y1="5" x2="35" y2="35" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#6EE7F7"/>
-                <stop offset="1" stop-color="#a78bfa"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <span class="logo-text">Orion<span class="logo-accent">AI</span></span>
-      </div>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#hero" class="nav-link active" data-section="hero">Home</a></li>
-        <li><a href="#dashboard" class="nav-link" data-section="dashboard">Dashboard</a></li>
-        <li><a href="#features" class="nav-link" data-section="features">Features</a></li>
-        <li><a href="#optimizer" class="nav-link" data-section="optimizer">Route AI</a></li>
-        <li><a href="#analytics" class="nav-link" data-section="analytics">Analytics</a></li>
-        <li><a href="#fleet" class="nav-link" data-section="fleet">Fleet</a></li>
-      </ul>
-      <div class="nav-actions">
-        <button class="btn-ghost" id="notifBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="notif-badge">3</span>
-        </button>
-        <button class="btn-primary" id="demoBtn">Live Demo</button>
-        <button class="hamburger" id="hamburger" aria-label="Menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <path d="M11 2L19 6.5V15.5L11 20L3 15.5V6.5L11 2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <circle cx="11" cy="11" r="3" fill="currentColor"/>
+      </svg>
     </div>
+    <span class="logo-text">LogiKA</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-section="dashboard">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item" data-section="tracking">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+      <span>Live Tracking</span>
+      <span class="nav-badge">Live</span>
+    </a>
+    <a href="#" class="nav-item" data-section="route">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l4-4 4 4 4-8 4 4"/><path d="M3 7h18"/></svg>
+      <span>Route Optimizer</span>
+    </a>
+    <a href="#" class="nav-item" data-section="cost">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>Cost Analysis</span>
+    </a>
+    <a href="#" class="nav-item" data-section="alerts">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Alerts</span>
+      <span class="nav-badge alert-badge" id="alertCount">3</span>
+    </a>
   </nav>
 
-  <!-- Notification Panel -->
-  <div class="notif-panel" id="notifPanel">
-    <div class="notif-header">
-      <span>Notifications</span>
-      <button class="notif-clear" id="notifClear">Clear all</button>
-    </div>
-    <div class="notif-item urgent">
-      <div class="notif-dot"></div>
-      <div>
-        <p class="notif-title">Route Alert: Truck #TRK-047</p>
-        <p class="notif-sub">Traffic congestion detected — rerouting via I-80</p>
-        <span class="notif-time">2 min ago</span>
-      </div>
-    </div>
-    <div class="notif-item">
-      <div class="notif-dot success"></div>
-      <div>
-        <p class="notif-title">Delivery Completed</p>
-        <p class="notif-sub">Order #ORD-7821 delivered to Warehouse C</p>
-        <span class="notif-time">14 min ago</span>
-      </div>
-    </div>
-    <div class="notif-item">
-      <div class="notif-dot warning"></div>
-      <div>
-        <p class="notif-title">AI Forecast Update</p>
-        <p class="notif-sub">Demand spike predicted for Region 4 (Fri–Sun)</p>
-        <span class="notif-time">1 hr ago</span>
-      </div>
+  <div class="sidebar-footer">
+    <div class="theme-toggle" id="themeToggle">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <span>Light Mode</span>
     </div>
   </div>
+</aside>
 
-  <!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
-  <section class="hero" id="hero">
-    <canvas id="heroCanvas" class="hero-canvas"></canvas>
-    <div class="hero-content">
-      <div class="hero-badge">
-        <span class="pulse-dot"></span>
-        AI Engine Active · 99.7% Uptime
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="page-title" id="pageTitle">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="system-status">
+        <span class="status-dot"></span>
+        <span>AI Engine Online</span>
       </div>
-      <h1 class="hero-title">
-        Intelligent Logistics,<br/>
-        <span class="gradient-text">Powered by AI</span>
-      </h1>
-      <p class="hero-subtitle">
-        Transform your supply chain with real-time route optimization, predictive demand forecasting,
-        and autonomous fleet intelligence — cutting costs by up to <strong>37%</strong>.
-      </p>
-      <div class="hero-ctas">
-        <button class="btn-primary btn-lg" id="heroCta" onclick="smoothScroll('dashboard')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Start Optimizing
+      <div class="time-display" id="timeDisplay"></div>
+    </div>
+  </header>
+
+  <!-- SECTIONS -->
+
+  <!-- === DASHBOARD === -->
+  <section class="section active" id="sec-dashboard">
+    <div class="section-header">
+      <h1>Operations Overview</h1>
+      <p>Karnataka Delivery Network · Real-time</p>
+    </div>
+
+    <!-- KPI STATS -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#3b82f6">
+        <div class="kpi-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+        </div>
+        <div class="kpi-data">
+          <div class="kpi-val" data-target="2841" id="kpi1">0</div>
+          <div class="kpi-label">Total Deliveries</div>
+        </div>
+        <div class="kpi-trend up">▲ 12% this week</div>
+      </div>
+      <div class="kpi-card" style="--accent:#10b981">
+        <div class="kpi-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+        </div>
+        <div class="kpi-data">
+          <div class="kpi-val" data-target="184" id="kpi2">0</div>
+          <div class="kpi-label">Active Deliveries</div>
+        </div>
+        <div class="kpi-trend up">▲ 8 since 1hr ago</div>
+      </div>
+      <div class="kpi-card" style="--accent:#f59e0b">
+        <div class="kpi-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="kpi-data">
+          <div class="kpi-val" data-target="14" id="kpi3">0</div>
+          <div class="kpi-label">Delayed Deliveries</div>
+        </div>
+        <div class="kpi-trend down">▼ 3 resolved today</div>
+      </div>
+      <div class="kpi-card" style="--accent:#8b5cf6">
+        <div class="kpi-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="kpi-data">
+          <div class="kpi-val" id="kpi4">₹4.2L</div>
+          <div class="kpi-label">Cost Saved (MTD)</div>
+        </div>
+        <div class="kpi-trend up">▲ AI Optimization</div>
+      </div>
+    </div>
+
+    <!-- MINI MAP + RECENT ACTIVITY -->
+    <div class="dash-grid">
+      <div class="card dash-map-card">
+        <div class="card-header">
+          <h3>Live Map — Karnataka</h3>
+          <span class="live-pill">● Live</span>
+        </div>
+        <div id="miniMap" class="mini-map"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Activity</h3>
+        </div>
+        <div class="activity-list" id="activityList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === TRACKING === -->
+  <section class="section" id="sec-tracking">
+    <div class="section-header">
+      <h1>Live Tracking</h1>
+      <p>Real-time shipment locations across Karnataka</p>
+    </div>
+    <div class="tracking-layout">
+      <div class="card tracking-map-card">
+        <div class="card-header">
+          <h3>Karnataka — Live Fleet</h3>
+          <span class="live-pill">● Tracking Active</span>
+        </div>
+        <div id="trackMap" class="track-map"></div>
+      </div>
+      <div class="tracking-panel">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><h3>Active Shipments</h3></div>
+          <div class="shipment-list" id="shipmentList"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Reschedule Delivery</h3></div>
+          <div class="form-group">
+            <label>Shipment ID</label>
+            <select class="input-field" id="reschedShip">
+              <option>SHP-7821</option>
+              <option>SHP-6204</option>
+              <option>SHP-5091</option>
+              <option>SHP-4300</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>New Date</label>
+            <input type="date" class="input-field" id="reschedDate" />
+          </div>
+          <div class="form-group">
+            <label>New Time Slot</label>
+            <select class="input-field" id="reschedTime">
+              <option>08:00 – 10:00 AM</option>
+              <option>10:00 – 12:00 PM</option>
+              <option>12:00 – 02:00 PM</option>
+              <option>02:00 – 04:00 PM</option>
+              <option>04:00 – 07:00 PM</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Reason</label>
+            <select class="input-field" id="reschedReason">
+              <option>Customer Request</option>
+              <option>Traffic / Delay</option>
+              <option>Vehicle Issue</option>
+              <option>Weather</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="rescheduleDelivery()">Confirm Reschedule</button>
+          <div id="reschedResult" class="result-box hidden"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === ROUTE OPTIMIZER === -->
+  <section class="section" id="sec-route">
+    <div class="section-header">
+      <h1>Route Optimizer</h1>
+      <p>AI-powered routing with ETA prediction & delay detection</p>
+    </div>
+    <div class="route-layout">
+      <div class="card route-input-card">
+        <div class="card-header"><h3>Plan a Route</h3></div>
+
+        <div class="form-group">
+          <label>Source Location</label>
+          <select class="input-field" id="routeSrc">
+            <option value="">— Select Source —</option>
+            <option>Bengaluru (Whitefield)</option>
+            <option>Mysuru (City Centre)</option>
+            <option>Hubli</option>
+            <option>Mangaluru (Port)</option>
+            <option>Belagavi</option>
+            <option>Tumkur</option>
+            <option>Shivamogga</option>
+            <option>Davangere</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Destination</label>
+          <select class="input-field" id="routeDest">
+            <option value="">— Select Destination —</option>
+            <option>Bengaluru (Whitefield)</option>
+            <option>Mysuru (City Centre)</option>
+            <option>Hubli</option>
+            <option>Mangaluru (Port)</option>
+            <option>Belagavi</option>
+            <option>Tumkur</option>
+            <option>Shivamogga</option>
+            <option>Davangere</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Vehicle Type</label>
+          <select class="input-field" id="routeVehicle">
+            <option value="bike">🛵 Bike</option>
+            <option value="minivan">🚐 Mini Van</option>
+            <option value="truck">🚛 Truck</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="input-field" id="routePriority">
+            <option value="standard">Standard</option>
+            <option value="express">Express</option>
+            <option value="same-day">Same Day</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" onclick="optimizeRoute()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Optimize Route
         </button>
-        <button class="btn-outline btn-lg" onclick="smoothScroll('features')">
-          Explore Features
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </button>
-      </div>
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <span class="hero-stat-val" data-target="37">0</span><span>%</span>
-          <span class="hero-stat-label">Cost Reduction</span>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val" data-target="2400">0</span><span>+</span>
-          <span class="hero-stat-label">Routes Optimized Daily</span>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val" data-target="98">0</span><span>%</span>
-          <span class="hero-stat-label">On-Time Delivery</span>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val" data-target="142">0</span><span>k</span>
-          <span class="hero-stat-label">Shipments Tracked</span>
-        </div>
-      </div>
-    </div>
-    <div class="hero-scroll-cue">
-      <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
-      <span>Scroll to explore</span>
-    </div>
-  </section>
 
-  <!-- ═══════════════════════════════ LIVE TICKER ═══════════════════════ -->
-  <div class="ticker-bar">
-    <div class="ticker-label">
-      <span class="pulse-dot"></span>
-      LIVE
-    </div>
-    <div class="ticker-track" id="tickerTrack">
-      <div class="ticker-content" id="tickerContent"></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ DASHBOARD ═══════════════════════════ -->
-  <section class="section" id="dashboard">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-badge">Live Dashboard</div>
-        <h2 class="section-title">Command Center</h2>
-        <p class="section-sub">Real-time visibility across your entire logistics network</p>
+        <div id="routeResult" class="route-result hidden"></div>
       </div>
 
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card" id="kpi1">
-          <div class="kpi-icon kpi-icon-blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
-          <div class="kpi-info">
-            <span class="kpi-label">Active Trucks</span>
-            <div class="kpi-value-row">
-              <span class="kpi-value" id="activeTrucks">247</span>
-              <span class="kpi-delta positive">+12 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></span>
+      <div class="route-right">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><h3>ETA Predictor</h3></div>
+          <div id="etaDisplay" class="eta-display">
+            <div class="eta-placeholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <p>Run route optimizer to see ETA prediction</p>
             </div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width:82%"></div></div>
           </div>
         </div>
-        <div class="kpi-card" id="kpi2">
-          <div class="kpi-icon kpi-icon-green">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <div class="kpi-info">
-            <span class="kpi-label">Routes Optimized</span>
-            <div class="kpi-value-row">
-              <span class="kpi-value" id="routesOpt">1,834</span>
-              <span class="kpi-delta positive">+5.3% <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></span>
-            </div>
-            <div class="kpi-bar"><div class="kpi-bar-fill kpi-bar-green" style="width:68%"></div></div>
-          </div>
-        </div>
-        <div class="kpi-card" id="kpi3">
-          <div class="kpi-icon kpi-icon-purple">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          </div>
-          <div class="kpi-info">
-            <span class="kpi-label">Shipments In Transit</span>
-            <div class="kpi-value-row">
-              <span class="kpi-value" id="inTransit">4,291</span>
-              <span class="kpi-delta positive">+8.1% <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></span>
-            </div>
-            <div class="kpi-bar"><div class="kpi-bar-fill kpi-bar-purple" style="width:91%"></div></div>
-          </div>
-        </div>
-        <div class="kpi-card" id="kpi4">
-          <div class="kpi-icon kpi-icon-orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div class="kpi-info">
-            <span class="kpi-label">Cost Saved Today</span>
-            <div class="kpi-value-row">
-              <span class="kpi-value" id="costSaved">$84.2K</span>
-              <span class="kpi-delta positive">+2.7% <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></span>
-            </div>
-            <div class="kpi-bar"><div class="kpi-bar-fill kpi-bar-orange" style="width:74%"></div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Map + Activity -->
-      <div class="dashboard-main">
-        <div class="map-panel glass-card">
-          <div class="panel-header">
-            <div>
-              <h3>Live Fleet Map</h3>
-              <span class="panel-sub">247 vehicles tracked in real time</span>
-            </div>
-            <div class="panel-controls">
-              <button class="ctrl-btn active" id="mapViewAll">All</button>
-              <button class="ctrl-btn" id="mapViewActive">Active</button>
-              <button class="ctrl-btn" id="mapViewAlert">Alerts</button>
-            </div>
-          </div>
-          <canvas id="mapCanvas" class="map-canvas"></canvas>
-          <div class="map-legend">
-            <span><i class="legend-dot dot-green"></i>On Route</span>
-            <span><i class="legend-dot dot-yellow"></i>Delayed</span>
-            <span><i class="legend-dot dot-red"></i>Alert</span>
-            <span><i class="legend-dot dot-gray"></i>Idle</span>
-          </div>
-        </div>
-
-        <div class="activity-panel">
-          <div class="glass-card activity-card">
-            <div class="panel-header">
-              <h3>Live Activity</h3>
-              <span class="live-badge"><span class="pulse-dot"></span>LIVE</span>
-            </div>
-            <div class="activity-feed" id="activityFeed">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-
-          <div class="glass-card ai-panel">
-            <div class="ai-panel-header">
-              <div class="ai-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
-                AI Copilot
-              </div>
-              <span class="ai-status">Thinking…</span>
-            </div>
-            <div class="ai-insights" id="aiInsights">
-              <!-- Populated by JS -->
+        <div class="card">
+          <div class="card-header"><h3>Delay Detection</h3></div>
+          <div id="delayPanel" class="delay-panel">
+            <div class="eta-placeholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <p>No active delay alerts for this route</p>
             </div>
           </div>
         </div>
@@ -265,362 +298,70 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════ FEATURES ══════════════════════════ -->
-  <section class="section section-alt" id="features">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-badge">Core Capabilities</div>
-        <h2 class="section-title">Everything You Need to Dominate Logistics</h2>
-        <p class="section-sub">Six pillars of intelligent supply chain management</p>
+  <!-- === COST ANALYSIS === -->
+  <section class="section" id="sec-cost">
+    <div class="section-header">
+      <h1>Cost Efficiency Analysis</h1>
+      <p>Compare vehicle costs and AI-recommended options</p>
+    </div>
+
+    <div class="cost-layout">
+      <div class="card cost-input-card">
+        <div class="card-header"><h3>Enter Route Details</h3></div>
+        <div class="form-group">
+          <label>Distance (km)</label>
+          <input type="number" class="input-field" id="costDist" value="120" min="1" max="1000" oninput="updateCost()" />
+        </div>
+        <div class="form-group">
+          <label>Package Weight (kg)</label>
+          <input type="number" class="input-field" id="costWeight" value="10" min="1" max="5000" oninput="updateCost()" />
+        </div>
+        <div class="form-group">
+          <label>Urgency</label>
+          <select class="input-field" id="costUrgency" onchange="updateCost()">
+            <option value="1">Standard (3–5 days)</option>
+            <option value="1.5">Express (1–2 days)</option>
+            <option value="2.2">Same Day</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fuel Surcharge</label>
+          <select class="input-field" id="costFuel" onchange="updateCost()">
+            <option value="1">Normal</option>
+            <option value="1.2">Peak Season (+20%)</option>
+            <option value="1.4">High Demand (+40%)</option>
+          </select>
+        </div>
       </div>
-      <div class="features-grid">
-        <div class="feature-card" data-delay="0">
-          <div class="feat-icon feat-blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          </div>
-          <h3>Dynamic Route AI</h3>
-          <p>Real-time route recalculation using traffic, weather, and vehicle constraints. Trims fuel costs by up to 28%.</p>
-          <div class="feat-metric">28% fuel savings</div>
-        </div>
-        <div class="feature-card" data-delay="100">
-          <div class="feat-icon feat-purple">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <h3>Predictive Demand</h3>
-          <p>ML-powered demand forecasting with 94% accuracy. Plan inventory 8 weeks ahead with confidence.</p>
-          <div class="feat-metric">94% accuracy</div>
-        </div>
-        <div class="feature-card" data-delay="200">
-          <div class="feat-icon feat-green">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
-          <h3>Fleet Intelligence</h3>
-          <p>Monitor vehicle health, driver behavior, and fuel efficiency across your entire fleet in real time.</p>
-          <div class="feat-metric">247 vehicles tracked</div>
-        </div>
-        <div class="feature-card" data-delay="300">
-          <div class="feat-icon feat-orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <h3>Real-Time Tracking</h3>
-          <p>End-to-end shipment visibility with ETA prediction, customer notifications, and proof of delivery.</p>
-          <div class="feat-metric">±3 min ETA accuracy</div>
-        </div>
-        <div class="feature-card" data-delay="400">
-          <div class="feat-icon feat-cyan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          </div>
-          <h3>Warehouse Orchestration</h3>
-          <p>Automated slotting, picking paths, and replenishment signals that cut warehouse time by 40%.</p>
-          <div class="feat-metric">40% faster picking</div>
-        </div>
-        <div class="feature-card" data-delay="500">
-          <div class="feat-icon feat-pink">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          </div>
-          <h3>AI Analytics Engine</h3>
-          <p>Deep-dive into costs, SLAs, carrier performance, and carbon footprint with explainable AI reports.</p>
-          <div class="feat-metric">360° supply chain view</div>
-        </div>
+
+      <div class="cost-cards-wrap">
+        <div id="vehicleCards" class="vehicle-cards"></div>
+        <div class="card ai-rec-card" id="aiRecCard"></div>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════ ROUTE OPTIMIZER ════════════════════ -->
-  <section class="section" id="optimizer">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-badge">Route AI</div>
-        <h2 class="section-title">Live Route Optimization Engine</h2>
-        <p class="section-sub">Watch the AI solve complex vehicle routing problems in milliseconds</p>
-      </div>
-      <div class="optimizer-layout">
-        <div class="optimizer-controls glass-card">
-          <h3>Configure Optimization</h3>
-          <div class="opt-form">
-            <div class="form-group">
-              <label>Number of Stops</label>
-              <div class="slider-row">
-                <input type="range" id="stopsSlider" min="5" max="30" value="12" class="slider" />
-                <span class="slider-val" id="stopsVal">12</span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Fleet Size (Vehicles)</label>
-              <div class="slider-row">
-                <input type="range" id="fleetSlider" min="2" max="10" value="4" class="slider" />
-                <span class="slider-val" id="fleetVal">4</span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Optimization Priority</label>
-              <div class="toggle-group">
-                <button class="toggle-btn active" onclick="setPriority(this,'distance')" id="prioDistance">Distance</button>
-                <button class="toggle-btn" onclick="setPriority(this,'time')" id="prioTime">Time</button>
-                <button class="toggle-btn" onclick="setPriority(this,'cost')" id="prioCost">Cost</button>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Traffic Conditions</label>
-              <div class="toggle-group">
-                <button class="toggle-btn active" onclick="setTraffic(this,'light')" id="trafficLight">Light</button>
-                <button class="toggle-btn" onclick="setTraffic(this,'moderate')" id="trafficMod">Moderate</button>
-                <button class="toggle-btn" onclick="setTraffic(this,'heavy')" id="trafficHeavy">Heavy</button>
-              </div>
-            </div>
-
-            <button class="btn-primary btn-full" id="optimizeBtn" onclick="runOptimizer()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Run AI Optimization
-            </button>
-            <div class="opt-results" id="optResults" style="display:none">
-              <div class="opt-result-item"><span>Total Distance</span><strong id="resDistance">—</strong></div>
-              <div class="opt-result-item"><span>Est. Duration</span><strong id="resDuration">—</strong></div>
-              <div class="opt-result-item"><span>Fuel Saved</span><strong id="resFuel">—</strong></div>
-              <div class="opt-result-item"><span>CO₂ Reduced</span><strong id="resCo2">—</strong></div>
-            </div>
-          </div>
-        </div>
-        <div class="optimizer-map-wrap glass-card">
-          <div class="opt-map-header">
-            <div>
-              <h3>Route Visualization</h3>
-              <span class="panel-sub" id="optStatus">Waiting to optimize…</span>
-            </div>
-            <div class="opt-legend">
-              <span class="legend-vehicle">Vehicle A</span>
-              <span class="legend-vehicle lv-b">Vehicle B</span>
-              <span class="legend-vehicle lv-c">Vehicle C</span>
-              <span class="legend-vehicle lv-d">Vehicle D</span>
-            </div>
-          </div>
-          <canvas id="optCanvas" class="opt-canvas"></canvas>
-          <div class="opt-progress-wrap" id="optProgressWrap" style="display:none">
-            <div class="opt-progress-label">AI solving… <span id="optPct">0%</span></div>
-            <div class="opt-progress-bar"><div class="opt-progress-fill" id="optFill"></div></div>
-          </div>
-        </div>
+  <!-- === ALERTS === -->
+  <section class="section" id="sec-alerts">
+    <div class="section-header">
+      <h1>Alerts & Notifications</h1>
+      <p>Real-time delay detection and system alerts</p>
+    </div>
+    <div class="alerts-layout">
+      <div id="alertsList" class="alerts-list"></div>
+      <div class="card alert-stats-card">
+        <div class="card-header"><h3>Alert Summary</h3></div>
+        <div class="alert-stat-grid" id="alertStats"></div>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════ ANALYTICS ══════════════════════════ -->
-  <section class="section section-alt" id="analytics">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-badge">Analytics</div>
-        <h2 class="section-title">Deep Supply Chain Intelligence</h2>
-        <p class="section-sub">AI-generated insights across cost, performance, and sustainability</p>
-      </div>
-      <div class="analytics-tabs">
-        <button class="tab-btn active" onclick="switchTab(this,'overview')" id="tab-overview">Overview</button>
-        <button class="tab-btn" onclick="switchTab(this,'cost')" id="tab-cost">Cost Analysis</button>
-        <button class="tab-btn" onclick="switchTab(this,'demand')" id="tab-demand">Demand Forecast</button>
-        <button class="tab-btn" onclick="switchTab(this,'carriers')" id="tab-carriers">Carrier Performance</button>
-      </div>
+</main>
 
-      <div class="tab-panel active" id="panel-overview">
-        <div class="chart-grid">
-          <div class="glass-card chart-card chart-wide">
-            <div class="chart-header">
-              <h3>Deliveries vs. Exceptions (30 days)</h3>
-              <div class="chart-period">
-                <button class="period-btn active">30d</button>
-                <button class="period-btn">90d</button>
-                <button class="period-btn">1y</button>
-              </div>
-            </div>
-            <canvas id="delivChart" height="200"></canvas>
-          </div>
-          <div class="glass-card chart-card">
-            <div class="chart-header"><h3>Delivery Status</h3></div>
-            <canvas id="statusChart" height="220"></canvas>
-            <div class="donut-legend" id="donutLegend"></div>
-          </div>
-          <div class="glass-card chart-card">
-            <div class="chart-header"><h3>Optimization Gain by Region</h3></div>
-            <canvas id="regionChart" height="220"></canvas>
-          </div>
-        </div>
-      </div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-      <div class="tab-panel" id="panel-cost">
-        <div class="chart-grid">
-          <div class="glass-card chart-card chart-wide">
-            <div class="chart-header"><h3>Monthly Cost Breakdown</h3></div>
-            <canvas id="costChart" height="200"></canvas>
-          </div>
-          <div class="glass-card chart-card">
-            <div class="chart-header"><h3>Cost per Mile Trend</h3></div>
-            <canvas id="cpmChart" height="220"></canvas>
-          </div>
-          <div class="glass-card chart-card cost-summary-card">
-            <h3>Savings Summary</h3>
-            <div class="savings-breakdown">
-              <div class="saving-item"><span>Fuel Optimization</span><strong class="pos">$124,300</strong></div>
-              <div class="saving-item"><span>Route Efficiency</span><strong class="pos">$89,700</strong></div>
-              <div class="saving-item"><span>Driver Overtime</span><strong class="pos">$42,100</strong></div>
-              <div class="saving-item"><span>Maintenance</span><strong class="pos">$31,500</strong></div>
-              <div class="saving-item total"><span>Total Saved (YTD)</span><strong class="pos">$287,600</strong></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-panel" id="panel-demand">
-        <div class="chart-grid">
-          <div class="glass-card chart-card chart-wide">
-            <div class="chart-header">
-              <h3>8-Week Demand Forecast</h3>
-              <span class="ai-accuracy-badge">94% AI Accuracy</span>
-            </div>
-            <canvas id="demandChart" height="200"></canvas>
-          </div>
-          <div class="glass-card chart-card">
-            <div class="chart-header"><h3>Regional Demand Heat</h3></div>
-            <div class="heat-grid" id="heatGrid"></div>
-          </div>
-          <div class="glass-card chart-card">
-            <div class="chart-header"><h3>Forecast vs. Actual</h3></div>
-            <canvas id="fvaChart" height="220"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-panel" id="panel-carriers">
-        <div class="glass-card carrier-table-card">
-          <div class="chart-header">
-            <h3>Carrier Scorecard</h3>
-            <input type="text" class="search-input" placeholder="Search carrier…" id="carrierSearch" oninput="filterCarriers(this.value)" />
-          </div>
-          <div class="table-wrap">
-            <table class="data-table" id="carrierTable">
-              <thead>
-                <tr>
-                  <th>Carrier</th><th>On-Time %</th><th>Damage Rate</th><th>Avg Cost/lb</th><th>Lanes</th><th>Score</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="carrierTbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════ FLEET ══════════════════════════════ -->
-  <section class="section" id="fleet">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-badge">Fleet Management</div>
-        <h2 class="section-title">Fleet Intelligence Hub</h2>
-        <p class="section-sub">Complete visibility into every vehicle, driver, and route</p>
-      </div>
-
-      <div class="fleet-toolbar">
-        <div class="fleet-search-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" class="fleet-search" id="fleetSearch" placeholder="Search by vehicle, driver, or route…" oninput="filterFleet(this.value)" />
-        </div>
-        <div class="fleet-filters">
-          <button class="filter-btn active" onclick="filterFleetStatus(this,'all')">All (24)</button>
-          <button class="filter-btn" onclick="filterFleetStatus(this,'on-route')">On Route</button>
-          <button class="filter-btn" onclick="filterFleetStatus(this,'idle')">Idle</button>
-          <button class="filter-btn" onclick="filterFleetStatus(this,'alert')">Alert</button>
-        </div>
-      </div>
-
-      <div class="fleet-grid" id="fleetGrid">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════ SHIPMENT TRACKER ══════════════════ -->
-  <section class="section section-alt" id="tracker">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-badge">Track & Trace</div>
-        <h2 class="section-title">Shipment Tracker</h2>
-        <p class="section-sub">Live end-to-end visibility for every order</p>
-      </div>
-      <div class="tracker-layout">
-        <div class="glass-card tracker-search-card">
-          <h3>Track a Shipment</h3>
-          <div class="tracker-input-row">
-            <input type="text" id="trackInput" class="track-input" placeholder="Enter order/tracking ID…" value="ORD-7821" />
-            <button class="btn-primary" id="trackBtn" onclick="trackShipment()">Track</button>
-          </div>
-          <div class="quick-tracks">
-            <span class="qt-label">Quick:</span>
-            <button class="qt-btn" onclick="quickTrack('ORD-7821')">ORD-7821</button>
-            <button class="qt-btn" onclick="quickTrack('ORD-6543')">ORD-6543</button>
-            <button class="qt-btn" onclick="quickTrack('ORD-9102')">ORD-9102</button>
-          </div>
-        </div>
-        <div class="glass-card tracker-result-card" id="trackerResult">
-          <div class="tracker-placeholder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <p>Enter a tracking ID to see live shipment status</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════ CTA ════════════════════════════════ -->
-  <section class="cta-section">
-    <div class="cta-glow"></div>
-    <div class="container cta-content">
-      <div class="section-badge">Get Started Today</div>
-      <h2 class="cta-title">Ready to Transform Your Logistics?</h2>
-      <p class="cta-sub">Join 500+ enterprises cutting costs, boosting deliveries, and going green with OrionAI</p>
-      <div class="cta-actions">
-        <button class="btn-primary btn-lg btn-glow" onclick="smoothScroll('dashboard')">Start Free Trial</button>
-        <button class="btn-outline btn-lg">Schedule a Demo</button>
-      </div>
-      <div class="trust-indicators">
-        <span>🔒 SOC 2 Type II</span>
-        <span>✅ ISO 27001</span>
-        <span>🌱 Carbon Neutral</span>
-        <span>⚡ 99.9% SLA</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════ FOOTER ═════════════════════════════ -->
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div class="footer-brand">
-        <span class="logo-text">Orion<span class="logo-accent">AI</span></span>
-        <p>Intelligent logistics orchestration for the modern supply chain.</p>
-        <div class="footer-socials">
-          <a href="#" aria-label="LinkedIn">in</a>
-          <a href="#" aria-label="Twitter">𝕏</a>
-          <a href="#" aria-label="GitHub">⌥</a>
-        </div>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h4>Product</h4>
-          <a href="#">Route AI</a><a href="#">Fleet Manager</a><a href="#">Analytics</a><a href="#">Integrations</a>
-        </div>
-        <div class="footer-col">
-          <h4>Company</h4>
-          <a href="#">About</a><a href="#">Blog</a><a href="#">Careers</a><a href="#">Press</a>
-        </div>
-        <div class="footer-col">
-          <h4>Support</h4>
-          <a href="#">Docs</a><a href="#">API Reference</a><a href="#">Status Page</a><a href="#">Contact</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 OrionAI Inc. All rights reserved.</span>
-      <span>Privacy · Terms · Cookies</span>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
