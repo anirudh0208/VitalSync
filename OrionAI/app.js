@@ -1,5 +1,5 @@
 /* ============================================================
-   LogiKA — script.js
+   OrionAI — script.js
    All simulation logic, maps, animations, data
    ============================================================ */
 
