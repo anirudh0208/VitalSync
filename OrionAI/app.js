@@ -63,6 +63,13 @@ const VEHICLE_DATA = [
   { id: 'bike',    emoji: '🛵', name: 'Bike',     ratePerKm: 4.5,  maxWeight: 20,   baseSpeed: 45, overweightFactor: 1.8 },
   { id: 'minivan', emoji: '🚐', name: 'Mini Van', ratePerKm: 9,    maxWeight: 500,  baseSpeed: 55, overweightFactor: 1.0 },
   { id: 'truck',   emoji: '🚛', name: 'Truck',    ratePerKm: 18,   maxWeight: 10000,baseSpeed: 45, overweightFactor: 1.0 },
+  { id: 'flight',  emoji: '✈️', name: 'Flight',   ratePerKm: 32,   maxWeight: 25000,baseSpeed: 650, overweightFactor: 1.2 },
+];
+
+const INDIA_STATE_DISTRICTS_URLS = [
+  'https://raw.githubusercontent.com/nshntarora/Indian-Cities-JSON/master/states-and-districts.json',
+  'https://raw.githubusercontent.com/iamrahulchauhan/indian-state-district-city/master/state_district_wise.json',
+  'https://raw.githubusercontent.com/sab99r/Indian-States-And-Districts/master/states-and-districts.json',
 ];
 
 const DELIVERY_HISTORY = [
@@ -88,24 +95,13 @@ let miniMap = null, trackMap = null;
 let movingMarker = null;
 let trackMovingMarker = null;
 let isLightMode = false;
-let googleMapsReady = false;
 let trackingMarkers = [];
 let trackingRouteLines = [];
 let trackingAnimationTimer = null;
-let miniMapPendingInit = false;
+let indiaStatesData = [];
+let indiaDistrictCoordCache = {};
 const TRACK_CENTER = { lat: 14.0, lng: 76.0 };
 const DASH_CENTER = { lat: 14.5, lng: 75.7 };
-
-window.onGoogleMapsReady = function onGoogleMapsReady() {
-  googleMapsReady = true;
-  if (!miniMap || miniMapPendingInit) {
-    initMiniMap();
-  }
-  const trackingSection = document.getElementById('sec-tracking');
-  if (trackingSection && trackingSection.classList.contains('active') && !trackMap) {
-    initTrackMap();
-  }
-};
 
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -125,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAssistant();
   renderHistory();
   renderAssistantInsight();
+  initIndiaLocationSelectors();
 });
 
 // ── CLOCK ─────────────────────────────────────────────────
@@ -192,15 +189,11 @@ function switchSection(name) {
   if (target) target.classList.add('active');
 
   // Init maps lazily
-  if (name === 'dashboard' && googleMapsReady && !miniMap) {
+  if (name === 'dashboard' && !miniMap) {
     setTimeout(initMiniMap, 100);
   }
   if (name === 'tracking' && !trackMap) {
-    if (googleMapsReady && window.google && window.google.maps) {
-      setTimeout(initTrackMap, 100);
-    } else {
-      showToast('🗺️ Waiting for Google Maps to load...');
-    }
+    setTimeout(initTrackMap, 100);
   }
 }
 
@@ -287,67 +280,35 @@ function renderAlertStats() {
 
 // ── MINI MAP (DASHBOARD) ──────────────────────────────────
 function initMiniMap() {
-  if (!googleMapsReady || !window.google || !window.google.maps) {
-    miniMapPendingInit = true;
-    return;
-  }
+  miniMap = L.map('miniMap', { zoomControl: true, scrollWheelZoom: false }).setView([DASH_CENTER.lat, DASH_CENTER.lng], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(miniMap);
 
-  miniMapPendingInit = false;
-  miniMap = new google.maps.Map(document.getElementById('miniMap'), {
-    center: DASH_CENTER,
-    zoom: 7,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    zoomControl: true
-  });
-
-  addMapCenterControl(miniMap, DASH_CENTER, 7);
-  addMapKmlLayer(miniMap);
   addShipmentMarkers(miniMap);
   startMovingMarker(miniMap, true);
 }
 
 // ── TRACK MAP (TRACKING SECTION) ─────────────────────────
 function initTrackMap() {
-  if (!googleMapsReady || !window.google || !window.google.maps) {
-    showToast('⚠️ Google Maps not loaded. Add a valid API key in index.html');
-    return;
-  }
-
-  trackMap = new google.maps.Map(document.getElementById('trackMap'), {
-    center: TRACK_CENTER,
-    zoom: 7,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: true
-  });
-
-  addMapCenterControl(trackMap, TRACK_CENTER, 7);
-  addMapKmlLayer(trackMap);
+  trackMap = L.map('trackMap', { zoomControl: true }).setView([TRACK_CENTER.lat, TRACK_CENTER.lng], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(trackMap);
 
   trackingMarkers = [];
   trackingRouteLines = [];
 
   Object.entries(CITIES).forEach(([name, latlng]) => {
-    const marker = new google.maps.Marker({
-      position: { lat: latlng[0], lng: latlng[1] },
-      map: trackMap,
-      title: name,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 7,
-        fillColor: '#3b82f6',
-        fillOpacity: 0.9,
-        strokeColor: '#ffffff',
-        strokeWeight: 2
-      }
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="custom-marker" style="background:rgba(59,130,246,0.9)">🏙️</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
     });
-
-    const info = new google.maps.InfoWindow({
-      content: `<b style="font-family:Syne">${name}</b>`
-    });
-    marker.addListener('click', () => info.open({ anchor: marker, map: trackMap }));
+    const marker = L.marker(latlng, { icon }).addTo(trackMap).bindPopup(`<b style="font-family:Syne">${name}</b>`);
     trackingMarkers.push(marker);
   });
 
@@ -363,70 +324,12 @@ function initTrackMap() {
   ];
 
   routeLines.forEach((line) => {
-    const polyline = new google.maps.Polyline({
-      path: line.pts.map(([lat, lng]) => ({ lat, lng })),
-      geodesic: true,
-      strokeColor: line.color,
-      strokeOpacity: 0.75,
-      strokeWeight: 3,
-      map: trackMap
-    });
+    const polyline = L.polyline(line.pts, { color: line.color, weight: 3, opacity: 0.75, dashArray: '8,6' }).addTo(trackMap);
     trackingRouteLines.push(polyline);
   });
 }
 
-function addMapCenterControl(map, center, zoom) {
-  const controlButton = document.createElement('button');
-  controlButton.className = 'map-center-btn';
-  controlButton.type = 'button';
-  controlButton.textContent = 'Center Map';
-  controlButton.title = 'Click to recenter the map';
-  controlButton.addEventListener('click', () => {
-    map.setCenter(center);
-    map.setZoom(zoom);
-  });
-
-  const centerControlDiv = document.createElement('div');
-  centerControlDiv.appendChild(controlButton);
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
-}
-
-function addMapKmlLayer(map) {
-  const kmlLayer = new google.maps.KmlLayer({
-    url: 'https://developers.google.com/maps/documentation/javascript/examples/kml/westcampus.kml',
-    preserveViewport: true,
-    suppressInfoWindows: false
-  });
-  kmlLayer.setMap(map);
-}
-
 function addShipmentMarkers(map) {
-  if (window.google && window.google.maps && map instanceof google.maps.Map) {
-    SHIPMENTS.forEach(s => {
-      const color = s.status === 'delayed' ? '#ef4444' : s.status === 'delivered' ? '#10b981' : '#f59e0b';
-      const marker = new google.maps.Marker({
-        position: { lat: s.lat, lng: s.lng },
-        map,
-        title: s.id,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: color,
-          fillOpacity: 0.95,
-          strokeColor: '#ffffff',
-          strokeWeight: 2
-        }
-      });
-
-      const info = new google.maps.InfoWindow({
-        content: `<b style="font-family:Syne">${s.id}</b><br>${s.from.split(' ')[0]} → ${s.to.split(' ')[0]}<br>ETA: ${s.eta}`
-      });
-      marker.addListener('click', () => info.open({ anchor: marker, map }));
-      if (map === trackMap) trackingMarkers.push(marker);
-    });
-    return;
-  }
-
   SHIPMENTS.forEach(s => {
     const color = s.status === 'delayed' ? '#ef4444' : s.status === 'delivered' ? '#10b981' : '#f59e0b';
     const icon = L.divIcon({
@@ -446,35 +349,6 @@ function startMovingMarker(map, isMini) {
   const from = CITIES['Bengaluru (Whitefield)'];
   const to   = CITIES['Mysuru (City Centre)'];
   let t = 0;
-
-  if (window.google && window.google.maps && map instanceof google.maps.Map) {
-    const marker = new google.maps.Marker({
-      position: { lat: from[0], lng: from[1] },
-      map,
-      title: 'SHP-7821 · Live Tracking',
-      icon: {
-        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-        scale: 6,
-        fillColor: '#3b82f6',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2
-      }
-    });
-
-    if (isMini) movingMarker = marker; else trackMovingMarker = marker;
-    if (!isMini && trackingAnimationTimer) clearInterval(trackingAnimationTimer);
-
-    const timer = setInterval(() => {
-      t = (t + 0.003) % 1;
-      const lat = from[0] + (to[0] - from[0]) * t;
-      const lng = from[1] + (to[1] - from[1]) * t;
-      marker.setPosition({ lat, lng });
-    }, 100);
-
-    if (!isMini) trackingAnimationTimer = timer;
-    return;
-  }
 
   const truckIcon = L.divIcon({
     className: '',
@@ -497,40 +371,50 @@ function startMovingMarker(map, isMini) {
 function focusShipment(id) {
   const s = SHIPMENTS.find(x => x.id === id);
   if (!s || !trackMap) return;
-  if (window.google && window.google.maps && trackMap instanceof google.maps.Map) {
-    trackMap.panTo({ lat: s.lat, lng: s.lng });
-    trackMap.setZoom(9);
-  } else {
-    trackMap.setView([s.lat, s.lng], 9, { animate: true });
-  }
+  trackMap.setView([s.lat, s.lng], 9, { animate: true });
   showToast(`📍 Focused on ${id}`);
 }
 
 // ── ROUTE OPTIMIZER ───────────────────────────────────────
-function optimizeRoute() {
-  const src  = document.getElementById('routeSrc').value;
-  const dest = document.getElementById('routeDest').value;
+async function optimizeRoute() {
+  const srcState = document.getElementById('routeSrcState').value;
+  const srcDistrict = document.getElementById('routeSrcDistrict').value;
+  const destState = document.getElementById('routeDestState').value;
+  const destDistrict = document.getElementById('routeDestDistrict').value;
+  const src = srcDistrict;
+  const dest = destDistrict;
   const veh  = document.getElementById('routeVehicle').value;
   const pri  = document.getElementById('routePriority').value;
 
-  if (!src || !dest) { showToast('⚠️ Please select source and destination'); return; }
+  if (!srcState || !src || !destState || !dest) {
+    showToast('⚠️ Please select source/destination state and district');
+    return;
+  }
   if (src === dest)   { showToast('⚠️ Source and destination cannot be same'); return; }
 
   const key = findRouteKey(src, dest);
-  let dist = 200, road = 'NH-XX', congestion = 'medium', toll = 100;
+  let dist = 200, road = 'National Highway', congestion = 'medium', toll = 100;
   if (key && ROUTE_DATA[key]) {
     ({ dist, road, congestion, toll } = ROUTE_DATA[key]);
   } else {
-    // Approximate
-    const c1 = CITIES[src], c2 = CITIES[dest];
-    if (c1 && c2) {
-      const dlat = c1[0] - c2[0], dlng = c1[1] - c2[1];
-      dist = Math.round(Math.sqrt(dlat*dlat + dlng*dlng) * 111);
+    const srcCoords = await geocodeDistrict(srcState, srcDistrict);
+    const destCoords = await geocodeDistrict(destState, destDistrict);
+    if (srcCoords && destCoords) {
+      dist = Math.max(20, Math.round(haversineKm(srcCoords, destCoords)));
+      road = dist > 900 ? 'NH Corridor + Expressway Mix' : dist > 350 ? 'Interstate NH Corridor' : 'Regional + NH Mix';
+      congestion = dist > 800 ? 'high' : dist > 300 ? 'medium' : 'low';
+      toll = Math.max(40, Math.round(dist * 0.7));
+    } else {
+      const c1 = CITIES[src], c2 = CITIES[dest];
+      if (c1 && c2) {
+        const dlat = c1[0] - c2[0], dlng = c1[1] - c2[1];
+        dist = Math.round(Math.sqrt(dlat*dlat + dlng*dlng) * 111);
+      }
     }
   }
 
   const vehicleData = VEHICLE_DATA.find(v => v.id === veh);
-  const speedFactor = congestion === 'high' ? 0.6 : congestion === 'medium' ? 0.78 : 0.92;
+  const speedFactor = veh === 'flight' ? 1 : (congestion === 'high' ? 0.6 : congestion === 'medium' ? 0.78 : 0.92);
   const priorityFactor = pri === 'same-day' ? 1.2 : pri === 'express' ? 1.0 : 0.85;
   const speed = vehicleData.baseSpeed * speedFactor;
   const baseHours = dist / speed;
@@ -539,10 +423,13 @@ function optimizeRoute() {
   const mins = Math.round((totalHours - hrs) * 60);
 
   const congestionLabel = { low: '🟢 Low', medium: '🟡 Moderate', high: '🔴 High' }[congestion];
-  const costEst = Math.round(dist * vehicleData.ratePerKm * (pri === 'same-day' ? 2 : pri === 'express' ? 1.5 : 1) + toll);
+  const baseFare = veh === 'flight' ? 1800 : 0;
+  const tollCost = veh === 'flight' ? 0 : toll;
+  const costEst = Math.round(dist * vehicleData.ratePerKm * (pri === 'same-day' ? 2 : pri === 'express' ? 1.5 : 1) + tollCost + baseFare);
 
   document.getElementById('routeResult').innerHTML = `
-    <div class="route-stat"><span class="route-stat-label">Route</span><span class="route-stat-val">${road}</span></div>
+    <div class="route-stat"><span class="route-stat-label">Route</span><span class="route-stat-val">${srcDistrict}, ${srcState} → ${destDistrict}, ${destState}</span></div>
+    <div class="route-stat"><span class="route-stat-label">Network</span><span class="route-stat-val">${road}</span></div>
     <div class="route-stat"><span class="route-stat-label">Distance</span><span class="route-stat-val">${dist} km</span></div>
     <div class="route-stat"><span class="route-stat-label">Estimated Time</span><span class="route-stat-val">${hrs}h ${mins}m</span></div>
     <div class="route-stat"><span class="route-stat-label">Traffic</span><span class="route-stat-val">${congestionLabel}</span></div>
@@ -595,6 +482,173 @@ function optimizeRoute() {
   `).join('');
 
   showToast('✅ Route optimized successfully!');
+}
+
+function haversineKm(a, b) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+async function initIndiaLocationSelectors() {
+  const srcStateEl = document.getElementById('routeSrcState');
+  const srcDistrictEl = document.getElementById('routeSrcDistrict');
+  const destStateEl = document.getElementById('routeDestState');
+  const destDistrictEl = document.getElementById('routeDestDistrict');
+  const trackStateEl = document.getElementById('trackState');
+  const trackDistrictEl = document.getElementById('trackDistrict');
+
+  if (!srcStateEl || !srcDistrictEl || !destStateEl || !destDistrictEl || !trackStateEl || !trackDistrictEl) return;
+
+  try {
+    indiaStatesData = await loadIndiaStatesDistricts();
+    const states = indiaStatesData.map(x => x.state).sort((a, b) => a.localeCompare(b));
+
+    fillSelect(srcStateEl, states, '— Select Source State —');
+    fillSelect(destStateEl, states, '— Select Destination State —');
+    fillSelect(trackStateEl, states, '— Select State —');
+
+    srcStateEl.addEventListener('change', () => {
+      fillSelect(srcDistrictEl, getDistrictsForState(srcStateEl.value), '— Select Source District —');
+    });
+    destStateEl.addEventListener('change', () => {
+      fillSelect(destDistrictEl, getDistrictsForState(destStateEl.value), '— Select Destination District —');
+    });
+    trackStateEl.addEventListener('change', () => {
+      fillSelect(trackDistrictEl, getDistrictsForState(trackStateEl.value), '— Select District —');
+    });
+
+    const districtCount = indiaStatesData.reduce((sum, s) => sum + s.districts.length, 0);
+    showToast(`✅ Loaded ${states.length} states / UTs and ${districtCount} districts`);
+  } catch (err) {
+    showToast('⚠️ Unable to load India states/districts. Use localhost server and internet.');
+  }
+}
+
+async function loadIndiaStatesDistricts() {
+  for (const url of INDIA_STATE_DISTRICTS_URLS) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const raw = await res.json();
+      const normalized = normalizeIndiaStateDistrictData(raw);
+      if (normalized.length > 0) return normalized;
+    } catch (_) {
+      // Try next mirror URL
+    }
+  }
+  throw new Error('No India state/district source available');
+}
+
+function normalizeIndiaStateDistrictData(raw) {
+  if (raw && Array.isArray(raw.states)) {
+    return normalizeIndiaStateDistrictData(raw.states);
+  }
+
+  if (Array.isArray(raw)) {
+    // Format: [{ state: 'Karnataka', districts: ['Bagalkot', ...] }, ...]
+    return raw
+      .filter(item => item && typeof item.state === 'string')
+      .map(item => ({
+        state: item.state.trim(),
+        districts: Array.isArray(item.districts)
+          ? [...new Set(item.districts.map(d => String(d).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b))
+          : []
+      }))
+      .filter(item => item.state && item.districts.length > 0)
+      .sort((a, b) => a.state.localeCompare(b.state));
+  }
+
+  if (raw && typeof raw === 'object') {
+    // Format: { Karnataka: { district: [...] } } OR { Karnataka: [...] }
+    const rows = Object.entries(raw).map(([stateName, value]) => {
+      let districts = [];
+      if (Array.isArray(value)) districts = value;
+      else if (value && Array.isArray(value.district)) districts = value.district;
+      else if (value && Array.isArray(value.districts)) districts = value.districts;
+
+      return {
+        state: String(stateName).trim(),
+        districts: [...new Set(districts.map(d => String(d).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b))
+      };
+    });
+
+    return rows
+      .filter(item => item.state && item.districts.length > 0)
+      .sort((a, b) => a.state.localeCompare(b.state));
+  }
+
+  return [];
+}
+
+function fillSelect(selectEl, values, placeholder) {
+  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    selectEl.appendChild(opt);
+  });
+}
+
+function getDistrictsForState(stateName) {
+  const match = indiaStatesData.find(x => x.state === stateName);
+  return match ? [...match.districts].sort((a, b) => a.localeCompare(b)) : [];
+}
+
+async function focusTrackingDistrict() {
+  const state = document.getElementById('trackState').value;
+  const district = document.getElementById('trackDistrict').value;
+  if (!state || !district) {
+    showToast('⚠️ Please select state and district');
+    return;
+  }
+  if (!trackMap) {
+    showToast('⚠️ Tracking map is not ready');
+    return;
+  }
+
+  const coords = await geocodeDistrict(state, district);
+  if (!coords) {
+    showToast('⚠️ Could not locate selected district');
+    return;
+  }
+
+  trackMap.setView([coords.lat, coords.lng], 9, { animate: true });
+  showToast(`📍 Focused on ${district}, ${state}`);
+}
+
+async function geocodeDistrict(state, district) {
+  const key = `${district}|${state}`;
+  if (indiaDistrictCoordCache[key]) return indiaDistrictCoordCache[key];
+  const query = encodeURIComponent(`${district}, ${state}, India`);
+  const providers = [
+    `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`,
+    `https://geocode.maps.co/search?q=${query}`
+  ];
+
+  for (const url of providers) {
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) continue;
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows[0] && rows[0].lat && rows[0].lon) {
+        const value = { lat: parseFloat(rows[0].lat), lng: parseFloat(rows[0].lon) };
+        if (!Number.isNaN(value.lat) && !Number.isNaN(value.lng)) {
+          indiaDistrictCoordCache[key] = value;
+          return value;
+        }
+      }
+    } catch (_) {
+      // Try next geocoding provider
+    }
+  }
+  return null;
 }
 
 function findRouteKey(a, b) {

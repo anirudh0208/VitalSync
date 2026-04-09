@@ -92,7 +92,7 @@
   <section class="section active" id="sec-dashboard">
     <div class="section-header">
       <h1>Operations Overview</h1>
-      <p>Karnataka Delivery Network · Real-time</p>
+      <p>India Delivery Network · Real-time</p>
     </div>
 
     <!-- KPI STATS -->
@@ -143,7 +143,7 @@
     <div class="dash-grid">
       <div class="card dash-map-card">
         <div class="card-header">
-          <h3>Live Map — Karnataka</h3>
+          <h3>Live Map — India</h3>
           <span class="live-pill">● Live</span>
         </div>
         <div id="miniMap" class="mini-map"></div>
@@ -162,17 +162,34 @@
   <section class="section" id="sec-tracking">
     <div class="section-header">
       <h1>Live Tracking</h1>
-      <p>Real-time shipment locations across Karnataka</p>
+      <p>Real-time shipment locations across India</p>
     </div>
     <div class="tracking-layout">
       <div class="card tracking-map-card">
         <div class="card-header">
-          <h3>Karnataka — Live Fleet</h3>
+          <h3>India — Live Fleet</h3>
           <span class="live-pill">● Tracking Active</span>
         </div>
         <div id="trackMap" class="track-map"></div>
       </div>
       <div class="tracking-panel">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><h3>Track by State & District</h3></div>
+          <div class="form-group">
+            <label>State</label>
+            <select class="input-field" id="trackState">
+              <option value="">— Select State —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>District</label>
+            <select class="input-field" id="trackDistrict">
+              <option value="">— Select District —</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="focusTrackingDistrict()">Focus District</button>
+        </div>
+
         <div class="card" style="margin-bottom:16px">
           <div class="card-header"><h3>Active Shipments</h3></div>
           <div class="shipment-list" id="shipmentList"></div>
@@ -229,32 +246,30 @@
         <div class="card-header"><h3>Plan a Route</h3></div>
 
         <div class="form-group">
-          <label>Source Location</label>
-          <select class="input-field" id="routeSrc">
-            <option value="">— Select Source —</option>
-            <option>Bengaluru (Whitefield)</option>
-            <option>Mysuru (City Centre)</option>
-            <option>Hubli</option>
-            <option>Mangaluru (Port)</option>
-            <option>Belagavi</option>
-            <option>Tumkur</option>
-            <option>Shivamogga</option>
-            <option>Davangere</option>
+          <label>Source State</label>
+          <select class="input-field" id="routeSrcState">
+            <option value="">— Select Source State —</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Destination</label>
-          <select class="input-field" id="routeDest">
-            <option value="">— Select Destination —</option>
-            <option>Bengaluru (Whitefield)</option>
-            <option>Mysuru (City Centre)</option>
-            <option>Hubli</option>
-            <option>Mangaluru (Port)</option>
-            <option>Belagavi</option>
-            <option>Tumkur</option>
-            <option>Shivamogga</option>
-            <option>Davangere</option>
+          <label>Source District</label>
+          <select class="input-field" id="routeSrcDistrict">
+            <option value="">— Select Source District —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Destination State</label>
+          <select class="input-field" id="routeDestState">
+            <option value="">— Select Destination State —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Destination District</label>
+          <select class="input-field" id="routeDestDistrict">
+            <option value="">— Select Destination District —</option>
           </select>
         </div>
 
@@ -264,6 +279,7 @@
             <option value="bike">🛵 Bike</option>
             <option value="minivan">🚐 Mini Van</option>
             <option value="truck">🚛 Truck</option>
+            <option value="flight">✈️ Flight</option>
           </select>
         </div>
 
@@ -464,6 +480,5 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=onGoogleMapsReady"></script>
 </body>
 </html>

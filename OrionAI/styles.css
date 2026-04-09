@@ -1184,23 +1184,6 @@ body.light .leaflet-tile-pane { filter: none; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
-.map-center-btn {
-  margin: 10px;
-  border: 0;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
-  cursor: pointer;
-  background: #ffffff;
-  color: #1f2937;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 36px;
-  padding: 0 14px;
-}
-
-.map-center-btn:hover { background: #f3f4f6; }
-.map-center-btn:focus { outline: 2px solid #3b82f6; outline-offset: 2px; }
 
 /* ── ROUTE RIGHT ────────────────────────────────── */
 .route-right { display: flex; flex-direction: column; gap: 14px; }
@@ -1258,7 +1241,3 @@ body.light .prompt-chip { background: #eff6ff; }
 body.light .leaflet-container { background: #e8eaf4 !important; }
 body.light .leaflet-tile-pane { filter: none; }
 
-body.light .map-center-btn {
-  background: #ffffff;
-  color: #111827;
-}
