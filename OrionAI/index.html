@@ -3,14 +3,393 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OrionAI — AI Logistics · Karnataka</title>
+<title>OrionAI — AI Logistics Platform · India</title>
+<meta name="description" content="OrionAI: AI-powered intelligent logistics optimization platform for India — real-time tracking, cold chain, emergency handling, weather-aware routing." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="styles.css" />
+<style>
+/* ── AUTH OVERLAY ───────────────────────────────── */
+#authOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  background: #0d0f14;
+  overflow: hidden;
+  transition: opacity 0.5s ease;
+}
+#authOverlay.hidden-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+/* LEFT PANEL */
+.auth-left {
+  width: 42%;
+  min-height: 100vh;
+  background: #13161d;
+  border-right: 1px solid #252a38;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.auth-left::before {
+  content: '';
+  position: absolute;
+  top: -120px; left: -80px;
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(79,95,255,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.auth-left::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; right: -60px;
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(123,94,167,0.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+.auth-brand { display: flex; align-items: center; gap: 12px; z-index: 1; margin-bottom: 48px; }
+.auth-brand-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#4f5fff,#7b5ea7);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(79,95,255,0.35);
+}
+.auth-brand-name { font-family:'Syne',sans-serif; font-weight:800; font-size:22px; letter-spacing:-0.02em; color:#f0f2ff; }
+.auth-hero { z-index:1; }
+.auth-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(79,95,255,0.12);
+  border: 1px solid rgba(79,95,255,0.3);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; color: #818cf8;
+  letter-spacing: 0.08em; margin-bottom: 28px;
+}
+.auth-tag .adot { width:7px;height:7px;background:#22c55e;border-radius:50%;animation:adotpulse 2s infinite; }
+@keyframes adotpulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+.auth-title {
+  font-family:'Syne',sans-serif; font-weight:800;
+  font-size:44px; line-height:1.08; letter-spacing:-0.03em;
+  color:#f0f2ff; margin-bottom:20px;
+}
+.auth-title span { background:linear-gradient(135deg,#4f5fff 0%,#a78bfa 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.auth-desc { font-size:15px; color:#9ca3af; line-height:1.7; max-width:320px; margin-bottom:40px; }
+.auth-stats { display:flex; gap:32px; }
+.auth-stat-val { font-family:'Syne',sans-serif; font-weight:800; font-size:26px; color:#f0f2ff; letter-spacing:-0.02em; }
+.auth-stat-label { font-size:12px; color:#6b7280; margin-top:2px; font-family:'Space Mono',monospace; letter-spacing:.04em; }
+/* RIGHT PANEL */
+.auth-right {
+  flex:1;
+  display:flex; align-items:center; justify-content:center;
+  padding:40px; position:relative; overflow:hidden;
+}
+.auth-right::before {
+  content:''; position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:500px; height:500px;
+  background:radial-gradient(circle, rgba(79,95,255,0.06) 0%, transparent 70%);
+  pointer-events:none;
+}
+.auth-right::after {
+  content:''; position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+.auth-card {
+  width:100%; max-width:420px;
+  background:#13161d;
+  border:1px solid #252a38;
+  border-radius:20px;
+  padding:40px;
+  box-shadow:0 0 40px rgba(79,95,255,0.12),0 32px 64px rgba(0,0,0,0.4);
+  z-index:1;
+  animation:authCardIn 0.5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes authCardIn { from{opacity:0;transform:translateY(20px) scale(0.97);} to{opacity:1;transform:translateY(0) scale(1);} }
+.auth-tabs {
+  display:flex; background:#1a1d27;
+  border:1px solid #252a38; border-radius:10px;
+  padding:4px; margin-bottom:32px;
+}
+.auth-tab-btn {
+  flex:1; padding:10px; border:none; border-radius:7px;
+  background:transparent; color:#6b7280;
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+  cursor:pointer; transition:all 0.2s;
+}
+.auth-tab-btn.active { background:linear-gradient(135deg,#4f5fff,#7b5ea7); color:#fff; box-shadow:0 4px 14px rgba(79,95,255,.35); }
+.auth-form-section { display:none; }
+.auth-form-section.visible { display:block; }
+.auth-form-header { margin-bottom:28px; }
+.auth-form-title { font-family:'Syne',sans-serif; font-weight:700; font-size:24px; color:#f0f2ff; margin-bottom:6px; letter-spacing:-0.02em; }
+.auth-form-subtitle { font-size:14px; color:#6b7280; }
+.auth-form-group { margin-bottom:18px; }
+.auth-label { display:block; font-size:13px; font-weight:500; color:#9ca3af; margin-bottom:7px; }
+.auth-input-wrap { position:relative; }
+.auth-input-icon {
+  position:absolute; left:14px; top:50%;
+  transform:translateY(-50%); color:#6b7280;
+  font-size:15px; pointer-events:none;
+}
+.auth-input {
+  width:100%; background:#1e2230;
+  border:1px solid #252a38; border-radius:10px;
+  padding:13px 14px 13px 40px;
+  color:#f0f2ff; font-family:'DM Sans',sans-serif;
+  font-size:14px; outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.auth-input:focus { border-color:#4f5fff; box-shadow:0 0 0 3px rgba(79,95,255,.15); }
+.auth-input::placeholder { color:#6b7280; }
+.auth-forgot { font-size:12px; color:#818cf8; text-decoration:none; float:right; margin-top:-4px; }
+.auth-btn-primary {
+  width:100%; padding:14px; border:none; border-radius:10px;
+  background:linear-gradient(135deg,#4f5fff,#7b5ea7);
+  color:#fff; font-family:'DM Sans',sans-serif;
+  font-size:15px; font-weight:600; cursor:pointer;
+  margin-top:6px; transition:opacity .2s,transform .15s,box-shadow .2s;
+  box-shadow:0 4px 20px rgba(79,95,255,.3);
+}
+.auth-btn-primary:hover { opacity:.92; transform:translateY(-1px); box-shadow:0 8px 28px rgba(79,95,255,.4); }
+.auth-divider {
+  display:flex; align-items:center; gap:12px;
+  margin:22px 0; color:#6b7280; font-size:12px;
+  font-family:'Space Mono',monospace;
+}
+.auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:#252a38; }
+.auth-btn-sso {
+  width:100%; padding:12px; border:1px solid #252a38;
+  border-radius:10px; background:#1e2230;
+  color:#9ca3af; font-family:'DM Sans',sans-serif;
+  font-size:14px; font-weight:500; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  transition:border-color .2s,background .2s;
+}
+.auth-btn-sso:hover { border-color:#4f5fff; background:rgba(79,95,255,.06); }
+.auth-terms { font-size:12px; color:#6b7280; text-align:center; margin-top:20px; line-height:1.6; }
+.auth-terms a { color:#818cf8; text-decoration:none; }
+.auth-strength-bar { display:flex; gap:4px; margin-top:8px; }
+.auth-strength-seg { flex:1; height:3px; background:#252a38; border-radius:2px; transition:background .3s; }
+.auth-strength-seg.active { background:#22c55e; }
+.auth-strength-seg.warn { background:#f97316; }
+.auth-engine-badge {
+  display:flex; align-items:center; gap:7px;
+  justify-content:center; margin-top:24px;
+  font-family:'Space Mono',monospace; font-size:11px; color:#6b7280;
+}
+.auth-engine-dot { width:7px;height:7px;background:#22c55e;border-radius:50%;animation:adotpulse 2s infinite; }
+.auth-input-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:800px) { .auth-left{display:none;} .auth-right{padding:24px;} }
+/* Spinner */
+.auth-spinner {
+  display:inline-block; width:14px; height:14px;
+  border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:authspin .7s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+@keyframes authspin { to{transform:rotate(360deg);} }
+/* Auth messages */
+.auth-error-msg {
+  display:none;
+  background:rgba(239,68,68,.12);
+  border:1px solid rgba(239,68,68,.3);
+  color:#f87171;
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:13px;
+  margin-bottom:16px;
+  animation:authCardIn .3s ease;
+}
+.auth-success-msg {
+  display:none;
+  background:rgba(34,197,94,.12);
+  border:1px solid rgba(34,197,94,.3);
+  color:#4ade80;
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:13px;
+  margin-bottom:16px;
+  animation:authCardIn .3s ease;
+}
+/* Role selector */
+.auth-role-select {
+  width:100%; background:#1e2230;
+  border:1px solid #252a38; border-radius:10px;
+  padding:13px 14px;
+  color:#f0f2ff; font-family:'DM Sans',sans-serif;
+  font-size:14px; outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  cursor:pointer; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+}
+.auth-role-select:focus { border-color:#4f5fff; box-shadow:0 0 0 3px rgba(79,95,255,.15); }
+.auth-role-select option { background:#1e2230; color:#f0f2ff; }
+/* User session badge in sidebar */
+.user-session-badge {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  background:#1a1d27;
+  border:1px solid #252a38;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+.user-avatar {
+  width:34px; height:34px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700;
+  color:#fff; flex-shrink:0;
+  overflow:hidden;
+}
+.user-avatar-img { width:100%; height:100%; object-fit:cover; }
+.user-info { flex:1; min-width:0; }
+.user-name { font-size:12px; font-weight:600; color:#f0f2ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-role { font-size:11px; font-family:'Space Mono',monospace; margin-top:2px; }
+.sign-out-btn {
+  background:transparent; border:none; cursor:pointer;
+  color:#6b7280; padding:4px; border-radius:6px;
+  transition:color .2s, background .2s;
+}
+.sign-out-btn:hover { color:#ef4444; background:rgba(239,68,68,.1); }
+</style>
 </head>
 <body>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div id="authOverlay">
+  <!-- Left decorative panel -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="auth-brand-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 2L19 6.5V15.5L11 20L3 15.5V6.5L11 2Z" stroke="white" stroke-width="1.5" fill="none"/>
+          <circle cx="11" cy="11" r="3" fill="white"/>
+        </svg>
+      </div>
+      <span class="auth-brand-name">OrionAI</span>
+    </div>
+    <div class="auth-hero">
+      <div class="auth-tag"><span class="adot"></span> AI ENGINE ONLINE</div>
+      <h1 class="auth-title">India Delivery<br><span>Network</span><br>Operations</h1>
+      <p class="auth-desc">Real-time fleet intelligence and AI-powered route optimization for last-mile delivery across India.</p>
+      <div class="auth-stats">
+        <div><div class="auth-stat-val">2,841</div><div class="auth-stat-label">TOTAL DELIVERIES</div></div>
+        <div><div class="auth-stat-val">184</div><div class="auth-stat-label">ACTIVE ROUTES</div></div>
+        <div><div class="auth-stat-val">₹4.2L</div><div class="auth-stat-label">COST SAVED MTD</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right auth card -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" onclick="authSwitchTab('login',this)">Sign In</button>
+        <button class="auth-tab-btn" onclick="authSwitchTab('signup',this)">Sign Up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-form-section visible" id="auth-login">
+        <div class="auth-form-header">
+          <div class="auth-form-title">Welcome back</div>
+          <div class="auth-form-subtitle">Access your operations dashboard</div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Email address</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">✉</span>
+            <input class="auth-input" type="email" id="authEmail" placeholder="you@company.com" autocomplete="email" />
+          </div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">
+            Password
+            <a href="#" class="auth-forgot" id="authForgotLink">Forgot password?</a>
+          </label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">🔒</span>
+            <input class="auth-input" type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+        <button class="auth-btn-primary" id="authSignInBtn">Sign In to Dashboard</button>
+        <div class="auth-divider">OR CONTINUE WITH</div>
+        <button class="auth-btn-sso" id="authGoogleBtn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+            <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+        <div class="auth-terms">By signing in you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</div>
+      </div>
+
+      <!-- SIGN UP -->
+      <div class="auth-form-section" id="auth-signup">
+        <div class="auth-form-header">
+          <div class="auth-form-title">Create account</div>
+          <div class="auth-form-subtitle">Start optimizing your delivery network</div>
+        </div>
+        <div class="auth-input-row">
+          <div class="auth-form-group">
+            <label class="auth-label">First name</label>
+            <div class="auth-input-wrap"><span class="auth-input-icon">👤</span><input class="auth-input" type="text" id="authFirstName" placeholder="Rohan" /></div>
+          </div>
+          <div class="auth-form-group">
+            <label class="auth-label">Last name</label>
+            <div class="auth-input-wrap"><span class="auth-input-icon">👤</span><input class="auth-input" type="text" id="authLastName" placeholder="Mehta" /></div>
+          </div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Work email</label>
+          <div class="auth-input-wrap"><span class="auth-input-icon">✉</span><input class="auth-input" type="email" id="authSignUpEmail" placeholder="you@company.com" autocomplete="email" /></div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Organisation</label>
+          <div class="auth-input-wrap"><span class="auth-input-icon">🏢</span><input class="auth-input" type="text" id="authOrganisation" placeholder="Acme Logistics Pvt. Ltd." /></div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Password</label>
+          <div class="auth-input-wrap"><span class="auth-input-icon">🔒</span><input class="auth-input" type="password" id="authSignUpPassword" placeholder="Create a strong password" oninput="authUpdateStrength(this.value)" autocomplete="new-password" /></div>
+          <div class="auth-strength-bar">
+            <div class="auth-strength-seg" id="as1"></div>
+            <div class="auth-strength-seg" id="as2"></div>
+            <div class="auth-strength-seg" id="as3"></div>
+            <div class="auth-strength-seg" id="as4"></div>
+          </div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Account Role</label>
+          <select class="auth-role-select" id="authSignUpRole">
+            <option value="staff">🔵 Staff — Standard Access</option>
+            <option value="admin">👑 Admin — Full Access (Owner only)</option>
+          </select>
+        </div>
+        <button class="auth-btn-primary" id="authSignUpBtn">Create Account</button>
+        <div class="auth-terms">Already have an account? <a href="#" onclick="authSwitchTabByName('login');return false;">Sign in here</a>.<br/>By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
+      </div>
+
+      <div class="auth-engine-badge"><span class="auth-engine-dot"></span> AI Engine Online · Secured by OrionAI</div>
+    </div>
+  </div>
+</div><!-- /authOverlay -->
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -25,6 +404,7 @@
   </div>
 
   <nav class="sidebar-nav">
+    <div class="nav-group-label">Core</div>
     <a href="#" class="nav-item active" data-section="dashboard">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>Dashboard</span>
@@ -42,6 +422,25 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       <span>Cost Analysis</span>
     </a>
+
+    <div class="nav-group-label" style="margin-top:12px">AI Features</div>
+    <a href="#" class="nav-item" data-section="coldchain">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+      <span>Cold Chain</span>
+      <span class="nav-badge cold-badge">❄️</span>
+    </a>
+    <a href="#" class="nav-item" data-section="emergency">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Emergency AI</span>
+      <span class="nav-badge alert-badge" id="emergencyCount">0</span>
+    </a>
+    <a href="#" class="nav-item" data-section="weather">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      <span>Weather India</span>
+      <span class="nav-badge weather-badge" id="weatherAlertCount">0</span>
+    </a>
+
+    <div class="nav-group-label" style="margin-top:12px">Intelligence</div>
     <a href="#" class="nav-item" data-section="alerts">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span>Alerts</span>
@@ -63,6 +462,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       <span>Light Mode</span>
     </div>
+    <div class="sidebar-version">v2.0 · Demo Mode</div>
   </div>
 </aside>
 
@@ -92,7 +492,7 @@
   <section class="section active" id="sec-dashboard">
     <div class="section-header">
       <h1>Operations Overview</h1>
-      <p>India Delivery Network · Real-time</p>
+      <p>India Delivery Network · Real-time AI Monitoring</p>
     </div>
 
     <!-- KPI STATS -->
@@ -116,6 +516,16 @@
           <div class="kpi-label">Active Deliveries</div>
         </div>
         <div class="kpi-trend up">▲ 8 since 1hr ago</div>
+      </div>
+      <div class="kpi-card" style="--accent:#06b6d4">
+        <div class="kpi-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+        </div>
+        <div class="kpi-data">
+          <div class="kpi-val" data-target="12" id="kpi-cold">0</div>
+          <div class="kpi-label">Cold Chain Active</div>
+        </div>
+        <div class="kpi-trend up">❄️ Temp: OK</div>
       </div>
       <div class="kpi-card" style="--accent:#f59e0b">
         <div class="kpi-icon">
@@ -156,13 +566,22 @@
         <div class="activity-list" id="activityList"></div>
       </div>
     </div>
+
+    <!-- FLEET OVERVIEW -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <h3>Fleet Overview</h3>
+        <span class="live-pill">● 6 Vehicles</span>
+      </div>
+      <div class="fleet-overview-grid" id="fleetOverviewGrid"></div>
+    </div>
   </section>
 
   <!-- === TRACKING === -->
   <section class="section" id="sec-tracking">
     <div class="section-header">
       <h1>Live Tracking</h1>
-      <p>Real-time shipment locations across India</p>
+      <p>Real-time shipment locations with road-path visualization</p>
     </div>
     <div class="tracking-layout">
       <div class="card tracking-map-card">
@@ -174,7 +593,7 @@
       </div>
       <div class="tracking-panel">
         <div class="card" style="margin-bottom:16px">
-          <div class="card-header"><h3>Track by State & District</h3></div>
+          <div class="card-header"><h3>Track by State &amp; District</h3></div>
           <div class="form-group">
             <label>State</label>
             <select class="input-field" id="trackState">
@@ -235,15 +654,28 @@
     </div>
   </section>
 
-  <!-- === ROUTE OPTIMIZER === -->
+  <!-- === ROUTE OPTIMIZER (extended) === -->
   <section class="section" id="sec-route">
     <div class="section-header">
       <h1>Route Optimizer</h1>
-      <p>AI-powered routing with ETA prediction & delay detection</p>
+      <p>AI-powered routing · Real road paths · Heavy vehicle support</p>
     </div>
     <div class="route-layout">
       <div class="card route-input-card">
         <div class="card-header"><h3>Plan a Route</h3></div>
+
+        <!-- Vehicle Class Toggle -->
+        <div class="form-group">
+          <label>Vehicle Class</label>
+          <div class="vehicle-class-toggle" id="vehicleClassToggle">
+            <button class="vclass-btn active" data-class="light" onclick="setVehicleClass('light')">
+              🚐 Light Vehicle
+            </button>
+            <button class="vclass-btn" data-class="heavy" onclick="setVehicleClass('heavy')">
+              🚛 Heavy / HGV
+            </button>
+          </div>
+        </div>
 
         <div class="form-group">
           <label>Source State</label>
@@ -273,7 +705,7 @@
           </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="vehicleTypeGroup">
           <label>Vehicle Type</label>
           <select class="input-field" id="routeVehicle">
             <option value="bike">🛵 Bike</option>
@@ -292,7 +724,26 @@
           </select>
         </div>
 
-        <button class="btn-primary" onclick="optimizeRoute()">
+        <!-- Heavy vehicle options (hidden by default) -->
+        <div id="heavyVehicleOptions" class="heavy-options hidden">
+          <div class="heavy-route-badge">
+            🚛 HGV MODE — Highway-Only Routing Active
+          </div>
+          <div class="form-group">
+            <label>Load Weight (kg)</label>
+            <input type="number" class="input-field" id="hgvWeight" value="5000" min="1000" max="25000" />
+          </div>
+          <div class="form-group">
+            <label>Load Type</label>
+            <select class="input-field" id="hgvLoadType">
+              <option value="standard">Standard Cargo</option>
+              <option value="hazmat">Hazardous Material</option>
+              <option value="oversized">Oversized Load</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="optimizeRoute()" id="optimizeBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           Optimize Route
         </button>
@@ -306,11 +757,11 @@
           <div id="etaDisplay" class="eta-display">
             <div class="eta-placeholder">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <p>Run route optimizer to see ETA prediction</p>
+              <p>Run route optimizer to see AI ETA prediction</p>
             </div>
           </div>
         </div>
-        <div class="card">
+        <div class="card" style="margin-bottom:16px">
           <div class="card-header"><h3>Delay Detection</h3></div>
           <div id="delayPanel" class="delay-panel">
             <div class="eta-placeholder">
@@ -318,6 +769,14 @@
               <p>No active delay alerts for this route</p>
             </div>
           </div>
+        </div>
+        <!-- Live Route Map -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Route Visualization</h3>
+            <span class="live-pill" id="routeMapPill">Road Path</span>
+          </div>
+          <div id="routeMap" class="route-map-mini"></div>
         </div>
       </div>
     </div>
@@ -366,10 +825,231 @@
     </div>
   </section>
 
+  <!-- === COLD CHAIN (NEW) === -->
+  <section class="section" id="sec-coldchain">
+    <div class="section-header">
+      <h1>❄️ Cold Chain Logistics</h1>
+      <p>Temperature-controlled shipment management · Pharma · Frozen · Chilled</p>
+    </div>
+
+    <div class="coldchain-layout">
+      <!-- Create Shipment -->
+      <div class="card coldchain-form-card">
+        <div class="card-header">
+          <h3>Create Shipment</h3>
+          <span class="live-pill cold-pill">❄️ Cold Chain AI</span>
+        </div>
+
+        <!-- Delivery Type Toggle -->
+        <div class="form-group">
+          <label>Delivery Type</label>
+          <div class="delivery-type-toggle" id="deliveryTypeToggle">
+            <button class="dtype-btn active" data-type="normal" onclick="setDeliveryType('normal')">
+              📦 Normal Delivery
+            </button>
+            <button class="dtype-btn" data-type="cold_chain" onclick="setDeliveryType('cold_chain')">
+              ❄️ Cold Chain
+            </button>
+          </div>
+        </div>
+
+        <!-- Cold chain options (shown when cold chain selected) -->
+        <div id="coldChainOptions" class="coldchain-options hidden">
+          <div class="temp-profile-grid" id="tempProfileGrid">
+            <div class="temp-profile-card active" data-profile="pharma" onclick="selectTempProfile('pharma')">
+              <div class="temp-icon">💊</div>
+              <div class="temp-label">Pharma</div>
+              <div class="temp-range">2–8°C</div>
+            </div>
+            <div class="temp-profile-card" data-profile="frozen" onclick="selectTempProfile('frozen')">
+              <div class="temp-icon">🧊</div>
+              <div class="temp-label">Frozen</div>
+              <div class="temp-range">-18 to -12°C</div>
+            </div>
+            <div class="temp-profile-card" data-profile="chilled" onclick="selectTempProfile('chilled')">
+              <div class="temp-icon">🌡️</div>
+              <div class="temp-label">Chilled</div>
+              <div class="temp-range">0–4°C</div>
+            </div>
+          </div>
+          <div class="cold-info-box" id="coldInfoBox">
+            <span class="cold-info-icon">💊</span>
+            <span id="coldInfoText">Pharma profile selected — vehicles with active 2–8°C compartments will be prioritized</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Origin City</label>
+          <select class="input-field" id="ccOrigin">
+            <option value="">— Select Origin —</option>
+            <option>Bengaluru (Whitefield)</option>
+            <option>Mysuru (City Centre)</option>
+            <option>Hubli</option>
+            <option>Mangaluru (Port)</option>
+            <option>Belagavi</option>
+            <option>Tumkur</option>
+            <option>Shivamogga</option>
+            <option>Davangere</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Destination City</label>
+          <select class="input-field" id="ccDest">
+            <option value="">— Select Destination —</option>
+            <option>Bengaluru (Whitefield)</option>
+            <option>Mysuru (City Centre)</option>
+            <option>Hubli</option>
+            <option>Mangaluru (Port)</option>
+            <option>Belagavi</option>
+            <option>Tumkur</option>
+            <option>Shivamogga</option>
+            <option>Davangere</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Weight (kg)</label>
+          <input type="number" class="input-field" id="ccWeight" value="50" min="1" max="8000" />
+        </div>
+
+        <div class="form-group">
+          <label>Vehicle Class</label>
+          <div class="vehicle-class-toggle">
+            <button class="vclass-btn active" data-class="light" onclick="setCCVehicleClass('light')">🚐 Light</button>
+            <button class="vclass-btn" data-class="heavy" onclick="setCCVehicleClass('heavy')">🚛 Heavy</button>
+          </div>
+        </div>
+
+        <button class="btn-primary btn-cold" onclick="createColdChainShipment()" id="ccCreateBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+          AI Assign &amp; Create Shipment
+        </button>
+
+        <div id="ccResult" class="cc-result hidden"></div>
+      </div>
+
+      <!-- Fleet Status -->
+      <div class="coldchain-right">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <h3>Refrigerated Fleet</h3>
+            <span class="live-pill cold-pill">❄️ Live</span>
+          </div>
+          <div class="cold-fleet-list" id="coldFleetList"></div>
+        </div>
+
+        <!-- Temperature Monitor -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Temperature Monitor</h3>
+            <button class="btn-sm" onclick="loadTempMonitor()">Refresh</button>
+          </div>
+          <div id="tempMonitor" class="temp-monitor">
+            <div class="eta-placeholder">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+              <p>Create a cold chain shipment to monitor temperature</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === EMERGENCY AI (NEW) === -->
+  <section class="section" id="sec-emergency">
+    <div class="section-header">
+      <h1>🚨 Emergency AI Handler</h1>
+      <p>Real-time breakdown detection · Auto vehicle reassignment · ETA recovery</p>
+    </div>
+
+    <div class="emergency-layout">
+      <!-- Emergency Map -->
+      <div class="card emergency-map-card">
+        <div class="card-header">
+          <h3>Emergency Tracking Map</h3>
+          <span class="live-pill emergency-pill" id="emergencyStatus">● Monitoring</span>
+        </div>
+        <div id="emergencyMap" class="emergency-map"></div>
+        <!-- Simulate Button -->
+        <div class="emergency-controls">
+          <select class="input-field em-select" id="emergencyVehicle">
+            <option value="V002">V002 — Express Hawk</option>
+            <option value="V005">V005 — Road King HGV</option>
+          </select>
+          <select class="input-field em-select" id="emergencyShipment">
+            <option value="SHP-7821">SHP-7821 (Bengaluru→Mysuru)</option>
+            <option value="SHP-5091">SHP-5091 (Mangaluru→Shivamogga)</option>
+          </select>
+          <select class="input-field em-select" id="emergencyReason">
+            <option value="breakdown">Vehicle Breakdown</option>
+            <option value="accident">Road Accident</option>
+            <option value="delay">Severe Delay</option>
+          </select>
+          <button class="btn-danger" onclick="simulateEmergency()" id="emergencyBtn">
+            🚨 Simulate Emergency
+          </button>
+        </div>
+      </div>
+
+      <!-- Event Feed -->
+      <div class="emergency-panel">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><h3>AI Decision Log</h3></div>
+          <div class="emergency-feed" id="emergencyFeed">
+            <div class="em-placeholder">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <p>No emergency events. Click "Simulate Emergency" to test the AI system.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Fleet Live Status</h3></div>
+          <div class="fleet-status-list" id="fleetStatusList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === WEATHER INDIA (NEW) === -->
+  <section class="section" id="sec-weather">
+    <div class="section-header">
+      <h1>🌦️ India Weather Dashboard</h1>
+      <p>All 28 states · Real-time conditions · AI route impact analysis</p>
+    </div>
+
+    <!-- Weather Summary Bar -->
+    <div class="weather-summary-bar" id="weatherSummaryBar"></div>
+
+    <!-- AI Advisory -->
+    <div class="card weather-advisory-card" id="weatherAdvisory">
+      <div class="card-header">
+        <h3>🤖 AI Weather Advisory</h3>
+        <span class="live-pill">Live</span>
+      </div>
+      <div id="weatherAdvisoryText" class="weather-advisory-text">Loading weather data...</div>
+    </div>
+
+    <!-- State Cards Grid -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <h3>State-wise Conditions</h3>
+        <div class="weather-filter-pills" id="weatherFilter">
+          <button class="filter-pill active" onclick="filterWeather('all')">All</button>
+          <button class="filter-pill" onclick="filterWeather('rain')">🌧️ Rain</button>
+          <button class="filter-pill" onclick="filterWeather('heat')">🔥 Heat</button>
+          <button class="filter-pill" onclick="filterWeather('affected')">⚠️ Affected</button>
+        </div>
+      </div>
+      <div class="weather-grid" id="weatherGrid"></div>
+    </div>
+  </section>
+
   <!-- === ALERTS === -->
   <section class="section" id="sec-alerts">
     <div class="section-header">
-      <h1>Alerts & Notifications</h1>
+      <h1>Alerts &amp; Notifications</h1>
       <p>Real-time delay detection and system alerts</p>
     </div>
     <div class="alerts-layout">
@@ -385,7 +1065,7 @@
   <section class="section" id="sec-assistant">
     <div class="section-header">
       <h1>Live AI Assistant</h1>
-      <p>Ask about routes, delay hotspots, delivery risk, and cost optimization in real time</p>
+      <p>Ask about routes, cold chain, emergencies, weather, and cost optimization</p>
     </div>
 
     <div class="assistant-layout">
@@ -395,14 +1075,16 @@
           <span class="live-pill">● Responding Live</span>
         </div>
         <div class="quick-prompts" id="quickPrompts">
-          <button class="prompt-chip" data-prompt="What is the best route plan for multiple deliveries today?">Best multi-delivery routes</button>
-          <button class="prompt-chip" data-prompt="Which areas have the highest delays right now?">Higher delay areas</button>
+          <button class="prompt-chip" data-prompt="What is the status of cold chain shipments?">Cold chain status</button>
+          <button class="prompt-chip" data-prompt="Are there any emergency breakdowns right now?">Emergency status</button>
+          <button class="prompt-chip" data-prompt="What is the weather impact on routes across India?">Weather impact</button>
+          <button class="prompt-chip" data-prompt="Which heavy vehicle routes are recommended today?">HGV routes</button>
+          <button class="prompt-chip" data-prompt="Which areas have the highest delays right now?">Delay hotspots</button>
           <button class="prompt-chip" data-prompt="How can we reduce logistics cost this week?">Reduce cost</button>
-          <button class="prompt-chip" data-prompt="Show me latest delivery and transaction history insights.">Latest history insights</button>
         </div>
         <div class="chat-feed" id="chatFeed"></div>
         <form class="chat-input-row" id="chatForm">
-          <input type="text" id="chatInput" class="input-field chat-input" placeholder="Ask OrionAI anything about operations..." />
+          <input type="text" id="chatInput" class="input-field chat-input" placeholder="Ask OrionAI about cold chain, emergencies, weather, routes..." />
           <button type="submit" class="btn-primary chat-send-btn">Send</button>
         </form>
       </div>
@@ -411,10 +1093,12 @@
         <div class="card">
           <div class="card-header"><h3>Assistant Capabilities</h3></div>
           <ul class="assistant-cap-list">
+            <li>❄️ Cold chain temperature monitoring &amp; vehicle assignment</li>
+            <li>🚨 Emergency breakdown detection &amp; AI reassignment</li>
+            <li>🌦️ Weather-aware ETA adjustments across all Indian states</li>
+            <li>🚛 Heavy vehicle highway-only routing (HGV)</li>
             <li>Multi-stop route recommendations with traffic risk flags</li>
-            <li>Delay hotspot analysis from active alerts and shipments</li>
             <li>Cost-saving opportunities by vehicle and consolidation</li>
-            <li>Recent delivery and transaction summaries on demand</li>
           </ul>
         </div>
         <div class="card">
@@ -428,7 +1112,7 @@
   <!-- === HISTORY === -->
   <section class="section" id="sec-history">
     <div class="section-header">
-      <h1>Delivery & Transaction History</h1>
+      <h1>Delivery &amp; Transaction History</h1>
       <p>Review recent deliveries, status trends, and payment transactions</p>
     </div>
 
@@ -443,6 +1127,7 @@
               <tr>
                 <th>Shipment</th>
                 <th>Route</th>
+                <th>Type</th>
                 <th>Status</th>
                 <th>Delivered At</th>
                 <th>Delay</th>
@@ -480,5 +1165,74 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
+<script type="module">
+  import {
+    initAuthObserver,
+    signInEmail,
+    signUpEmail,
+    signInGoogle,
+    sendReset,
+  } from './firebase-auth.js';
+
+  // ── Wire up Login ──────────────────────────────────────
+  document.getElementById('authSignInBtn').addEventListener('click', async () => {
+    const email    = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) {
+      showInlineError('Please enter your email and password.');
+      return;
+    }
+    try { await signInEmail(email, password); } catch (_) {}
+  });
+
+  // ── Wire up Google ─────────────────────────────────────
+  document.getElementById('authGoogleBtn').addEventListener('click', async () => {
+    try { await signInGoogle(); } catch (_) {}
+  });
+
+  // ── Wire up Sign Up ────────────────────────────────────
+  document.getElementById('authSignUpBtn').addEventListener('click', async () => {
+    const firstName    = document.getElementById('authFirstName').value.trim();
+    const lastName     = document.getElementById('authLastName').value.trim();
+    const email        = document.getElementById('authSignUpEmail').value.trim();
+    const organisation = document.getElementById('authOrganisation').value.trim();
+    const password     = document.getElementById('authSignUpPassword').value;
+    const role         = document.getElementById('authSignUpRole').value;
+    if (!firstName || !email || !password) {
+      showInlineError('Please fill in all required fields.');
+      return;
+    }
+    try { await signUpEmail(email, password, firstName, lastName, organisation, role); } catch (_) {}
+  });
+
+  // ── Forgot password ────────────────────────────────────
+  document.getElementById('authForgotLink').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value.trim();
+    if (!email) {
+      showInlineError('Enter your email above first, then click Forgot password.');
+      return;
+    }
+    await sendReset(email);
+  });
+
+  // ── Inline error helper (before firebase-auth.js loads) ─
+  function showInlineError(msg) {
+    let el = document.getElementById('authErrorMsg');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'authErrorMsg';
+      el.className = 'auth-error-msg';
+      const card = document.querySelector('.auth-card');
+      if (card) card.prepend(el);
+    }
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  // ── Start auth observer ────────────────────────────────
+  initAuthObserver();
+</script>
 </body>
 </html>
