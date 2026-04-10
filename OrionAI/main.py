@@ -5,6 +5,13 @@ Covers: Auth, Shipments (cold chain), Routes (real paths + heavy vehicle),
         Weather (simulated), Fleet Management.
 """
 
+import os
+import sys
+from dotenv import load_dotenv
+
+# Load .env before anything else — silently ignored if file doesn't exist
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -20,18 +27,28 @@ import random
 import math
 
 # ─────────────────────────────────────────────
-# CONFIG
+# CONFIG  (all sensitive values from environment)
 # ─────────────────────────────────────────────
-SECRET_KEY       = "orionai-secret-key-change-in-prod"
-ALGORITHM        = "HS256"
-ACCESS_TOKEN_TTL = 60  # minutes
+_raw_secret = os.getenv("SECRET_KEY", "")
+if not _raw_secret or _raw_secret == "orionai-secret-key-change-in-prod":
+    # Hard-fail in production; warn loudly in dev
+    if os.getenv("ENV", "development") == "production":
+        sys.exit("FATAL: SECRET_KEY is not set or is still the default placeholder. Set a strong key in .env")
+    else:
+        import secrets as _secrets_mod
+        _raw_secret = _secrets_mod.token_hex(32)
+        print("[WARNING] SECRET_KEY not set — using a random key for this session. Set SECRET_KEY in .env for stable JWT tokens.", flush=True)
 
-DATABASE_URL = "sqlite:///./orionai.db"
+SECRET_KEY       = _raw_secret
+ALGORITHM        = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_TTL = int(os.getenv("ACCESS_TOKEN_TTL", "60"))  # minutes
 
-# NOTE: In production, set these in .env
-# OWM_API_KEY = os.getenv("OWM_API_KEY", "")
-# ORS_API_KEY = os.getenv("ORS_API_KEY", "")
-# For hackathon demo: all external API calls use realistic simulated data.
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./orionai.db")
+
+# External API keys — set in .env for production
+# Production: replace simulated data with real API calls
+OWM_API_KEY = os.getenv("OWM_API_KEY", "")  # OpenWeatherMap
+ORS_API_KEY = os.getenv("ORS_API_KEY", "")  # OpenRouteService
 
 # ─────────────────────────────────────────────
 # DATABASE SETUP

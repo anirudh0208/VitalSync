@@ -23,19 +23,11 @@ import {
   serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-// ── Firebase Config ────────────────────────────────────────
-const firebaseConfig = {
-  apiKey:            'AIzaSyAaM3eClyhBEjlSQLn5KAarqp6hue2ae6M',
-  authDomain:        'vitalsync-6ab1b.firebaseapp.com',
-  projectId:         'vitalsync-6ab1b',
-  storageBucket:     'vitalsync-6ab1b.firebasestorage.app',
-  messagingSenderId: '568590722090',
-  appId:             '1:568590722090:web:0ac02e16e22e70fa91cf53',
-  measurementId:     'G-C91GM8L053',
-};
+// ── Firebase Config (loaded from gitignored firebase-config.js) ─
+import { FIREBASE_CONFIG, ADMIN_EMAILS } from './firebase-config.js';
 
 // ── Init ───────────────────────────────────────────────────
-const app      = initializeApp(firebaseConfig);
+const app      = initializeApp(FIREBASE_CONFIG);
 const auth     = getAuth(app);
 const db       = getFirestore(app);
 const provider = new GoogleAuthProvider();
@@ -175,9 +167,8 @@ export async function sendReset(email) {
 
 // ── Helpers ────────────────────────────────────────────────
 async function resolveSignupRole(email, requestedRole) {
-  // If the signing-up email is the project owner, grant admin
-  // Add your admin email(s) here
-  const ADMIN_EMAILS = ['manjunathshashank08@gmail.com'];
+  // ADMIN_EMAILS is imported from the gitignored firebase-config.js
+  // Add admin email(s) there, never hardcode them here
   if (ADMIN_EMAILS.includes(email.toLowerCase())) return 'admin';
   return requestedRole;
 }

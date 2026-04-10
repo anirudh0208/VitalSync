@@ -1,6 +1,10 @@
 """
 Test script to run OrionAI backend and capture outputs from all endpoints.
 """
+import sys
+import io
+# Force UTF-8 output on Windows to handle unicode characters like arrows
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 import json
 import uuid
 from fastapi.testclient import TestClient
