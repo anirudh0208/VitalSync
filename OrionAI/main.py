@@ -14,6 +14,7 @@ load_dotenv()
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from contextlib import asynccontextmanager
 import databases
@@ -23,6 +24,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional, List
+from pathlib import Path
 import random
 import math
 
@@ -74,7 +76,8 @@ metadata.create_all(engine)
 # SECURITY
 # ─────────────────────────────────────────────
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+DISABLE_AUTH = os.getenv("DISABLE_AUTH", "1").lower() in {"1", "true", "yes"}
 
 def hash_password(plain: str) -> str:
     return pwd_ctx.hash(plain)
@@ -88,12 +91,25 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)):
+    if DISABLE_AUTH:
+        return {
+            "id": 0,
+            "first_name": "Demo",
+            "last_name": "User",
+            "email": "demo@orionai.local",
+            "organisation": "Hackathon Demo",
+        }
+
     credentials_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not token:
+        raise credentials_exc
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -101,6 +117,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise credentials_exc
     except JWTError:
         raise credentials_exc
+    
     user = await database.fetch_one(
         users_table.select().where(users_table.c.email == email)
     )
@@ -118,10 +135,11 @@ async def lifespan(app: FastAPI):
     await database.disconnect()
 
 app = FastAPI(title="OrionAI Backend", version="2.0.0", lifespan=lifespan)
+APP_DIR = Path(__file__).resolve().parent
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1334,3 +1352,14 @@ async def health():
         "version": "2.0.0",
         "features": ["cold_chain", "emergency_ai", "weather_india", "heavy_vehicle_routing", "real_road_paths"],
     }
+
+
+@app.get("/", include_in_schema=False)
+async def serve_dashboard():
+    return FileResponse(APP_DIR / "index.html")
+
+
+@app.get("/login", include_in_schema=False)
+@app.get("/signup", include_in_schema=False)
+async def redirect_auth_pages():
+    return RedirectResponse(url="/", status_code=302)

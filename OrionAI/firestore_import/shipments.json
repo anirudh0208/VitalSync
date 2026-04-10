@@ -1,0 +1,62 @@
+[
+  {
+    "id": "SHP-7821",
+    "from": "Bengaluru (Whitefield)",
+    "to": "Mysuru (City Centre)",
+    "status": "transit",
+    "eta": "2h 30m",
+    "lat": 12.63,
+    "lng": 77.15,
+    "delivery_type": "normal",
+    "cold_chain_profile": null,
+    "assigned_vehicle": "V002"
+  },
+  {
+    "id": "SHP-6204",
+    "from": "Hubli",
+    "to": "Bengaluru (Whitefield)",
+    "status": "transit",
+    "eta": "5h 10m",
+    "lat": 14.5,
+    "lng": 75.8,
+    "delivery_type": "cold_chain",
+    "cold_chain_profile": "pharma",
+    "assigned_vehicle": "V003"
+  },
+  {
+    "id": "SHP-5091",
+    "from": "Mangaluru (Port)",
+    "to": "Shivamogga",
+    "status": "delayed",
+    "eta": "4h 50m",
+    "lat": 13.2,
+    "lng": 75.3,
+    "delivery_type": "normal",
+    "cold_chain_profile": null,
+    "assigned_vehicle": "V005"
+  },
+  {
+    "id": "SHP-4300",
+    "from": "Belagavi",
+    "to": "Davangere",
+    "status": "transit",
+    "eta": "3h 00m",
+    "lat": 15.1,
+    "lng": 75.3,
+    "delivery_type": "cold_chain",
+    "cold_chain_profile": "frozen",
+    "assigned_vehicle": "V004"
+  },
+  {
+    "id": "SHP-3814",
+    "from": "Tumkur",
+    "to": "Hubli",
+    "status": "delivered",
+    "eta": "Done",
+    "lat": 14.2,
+    "lng": 76.4,
+    "delivery_type": "normal",
+    "cold_chain_profile": null,
+    "assigned_vehicle": "V001"
+  }
+]

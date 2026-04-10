@@ -290,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWeatherBadges();
   initWeatherGrid();
   initWeatherSummary();
+  // Firebase sync intentionally disabled for now.
 });
 
 // ── CLOCK ─────────────────────────────────────────────────
@@ -826,9 +827,22 @@ function createColdChainShipment() {
   const eta = Math.round(route.dist / (ccVehicleClass === 'heavy' ? 38 : 50));
   const cost = Math.round(route.dist * (ccVehicleClass === 'heavy' ? 18 : 9) * costMultiplier + route.toll);
   const newId = `SHP-${9000 + Math.floor(Math.random() * 999)}`;
+  
+  const newShipment = { 
+    id: newId, 
+    from: origin, 
+    to: dest, 
+    status: 'transit', 
+    eta: `${eta}h`, 
+    lat: CITIES[origin][0], 
+    lng: CITIES[origin][1], 
+    delivery_type: currentDeliveryType, 
+    cold_chain_profile: currentDeliveryType === 'cold_chain' ? currentTempProfile : null, 
+    assigned_vehicle: assigned.id 
+  };
 
   assigned.status = 'in_transit';
-  SHIPMENTS.push({ id: newId, from: origin, to: dest, status: 'transit', eta: `${eta}h`, lat: CITIES[origin][0], lng: CITIES[origin][1], delivery_type: currentDeliveryType, cold_chain_profile: currentDeliveryType === 'cold_chain' ? currentTempProfile : null, assigned_vehicle: assigned.id });
+  SHIPMENTS.push(newShipment);
 
   renderColdFleetList();
   renderFleetOverview();
@@ -1584,7 +1598,7 @@ function authUpdateStrength(val) {
 }
 
 // handleAuthSignIn is now a no-op stub.
-// Real authentication is handled by the Firebase ES module in firebase-auth.js
+// Real authentication is handled by auth-service.js
 // which is loaded as <script type="module"> in index.html.
 function handleAuthSignIn() {
   // Legacy stub — no-op. Buttons are wired via addEventListener in the module script.

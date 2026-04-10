@@ -1,0 +1,56 @@
+[
+  {
+    "type": "critical",
+    "icon": "🚨",
+    "title": "⚠️ Delay due to traffic — NH-75 near Agumbe",
+    "desc": "SHP-5091 affected. 3 vehicles stuck in accident clearance. ETA pushed by 1h 20min. Auto-reroute via Tirthahalli initiated.",
+    "tag": "critical",
+    "route": "Mangaluru → Shivamogga",
+    "time": "5 min ago"
+  },
+  {
+    "type": "warning",
+    "icon": "🌧️",
+    "title": "⚠️ Weather advisory — Heavy rain in Coastal Karnataka",
+    "desc": "Mangaluru port corridor at risk. 4 shipments may face 30–60 min delays. Monitoring wind speed > 55 km/h.",
+    "tag": "warning",
+    "route": "Mangaluru corridor",
+    "time": "12 min ago"
+  },
+  {
+    "type": "warning",
+    "icon": "🌡️",
+    "title": "⚠️ Cold chain temp breach risk — Bihar heat wave 38°C",
+    "desc": "FreezePro HGV (V004): compartment temp trending toward upper threshold. Recommend increasing check interval.",
+    "tag": "warning",
+    "route": "Bihar corridor",
+    "time": "20 min ago"
+  },
+  {
+    "type": "warning",
+    "icon": "⛽",
+    "title": "⚠️ Fuel cost spike detected",
+    "desc": "Diesel prices up 8% in Belagavi zone. AI recommends shifting 2 truck routes to Mini Van for cost saving of ₹3,400.",
+    "tag": "warning",
+    "route": "Belagavi zone",
+    "time": "28 min ago"
+  },
+  {
+    "type": "info",
+    "icon": "🔄",
+    "title": "Route optimization complete",
+    "desc": "AI optimized 6 routes on the Bengaluru–Mysuru corridor. Combined savings: ₹18,200 and 2.3 hours fleet time.",
+    "tag": "info",
+    "route": "Bengaluru → Mysuru",
+    "time": "45 min ago"
+  },
+  {
+    "type": "resolved",
+    "icon": "✅",
+    "title": "Resolved — Traffic jam cleared on NH-48",
+    "desc": "The 2-hour congestion near Tumkur has cleared. SHP-6112 back on schedule. Estimated arrival resumed.",
+    "tag": "resolved",
+    "route": "Tumkur bypass",
+    "time": "2 hr ago"
+  }
+]
